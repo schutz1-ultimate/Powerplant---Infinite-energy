@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="sk"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Powerplant</title>
+<style>
+:root{--bg:#f6f6f3;--card:#fff;--tx:#1d1d1b;--mu:#6b6b66;--bd:#dcdcd5;--nu:#7b4fd1;--so:#e0a000;--ps:#1f7ae0;--ok:#2e9b57;--bad:#d33a3a;--dem:#888;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--card:#222226;--tx:#ececec;--mu:#9a9aa2;--bd:#38383f;--nu:#a98bf0;--so:#f0c030;--ps:#5aa2f5;--ok:#4cc27a;--bad:#f06060;--dem:#aaa}}
+:root[data-theme="dark"]{--bg:#17171a;--card:#222226;--tx:#ececec;--mu:#9a9aa2;--bd:#38383f;--nu:#a98bf0;--so:#f0c030;--ps:#5aa2f5;--ok:#4cc27a;--bad:#f06060;--dem:#aaa}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1280px;margin:0 auto;padding:14px;display:grid;gap:10px;grid-template-columns:290px minmax(0,1fr) 300px;grid-template-areas:"top top top" "nu grid st" "so grid st" "ps chart sc" "end end end"}
+main .card{margin:0}.top{grid-area:top;margin:0}.plants{display:contents}
+#st .grid,#scc .grid{grid-template-columns:1fr 1fr}
+#gs line{stroke:var(--bd);stroke-width:1;stroke-dasharray:7 7;animation:fl 1s linear infinite}#gs line.rev{animation-direction:reverse}
+@keyframes fl{to{stroke-dashoffset:-14}}
+#gs text{fill:var(--tx);font-family:inherit}
+@media (max-width:900px){main{grid-template-columns:1fr;grid-template-areas:"top" "grid" "st" "nu" "so" "ps" "chart" "sc" "end"}}
+h1{font-size:20px;margin:0 0 4px}
+.top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.k{color:var(--mu);font-size:12px}.v{font-size:22px;font-weight:600}
+.row{display:flex;justify-content:space-between;font-size:13px;color:var(--mu)}
+input[type=range]{width:100%}
+button{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:6px 12px;cursor:pointer;font:inherit}
+button.on{border-color:var(--ps);color:var(--ps)}
+.bar{height:12px;background:var(--bd);border-radius:6px;overflow:hidden}.bar>div{height:100%;width:0;background:var(--ok)}
+canvas{width:100%;height:220px;display:block}
+#msg{font-weight:600;min-height:22px}
+.leg span{margin-right:12px;font-size:12px}.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
+#end{display:none;text-align:center}
+</style></head><body><main>
+<div class="top"><div><h1>⚡ Powerplant</h1><div class="k">Vyrovnaj výrobu so spotrebou a udrž sieť stabilnú.</div></div>
+<div><button id="p">Pauza</button> <button data-s="1" class="on">×1</button> <button data-s="2">×2</button> <button data-s="4">×4</button></div></div>
+
+<div class="card" id="st" style="grid-area:st"><div class="grid">
+<div><div class="k">Herný čas</div><div class="v" id="clock">Deň 1, 00:00</div></div>
+<div><div class="k">Spotreba (vr. Nemecka)</div><div class="v" id="dem">0 MW</div></div>
+<div><div class="k">Dodávka do siete</div><div class="v" id="net">0 MW</div></div>
+<div><div class="k">Frekvence</div><div class="v" id="freq">50,00 Hz</div></div>
+</div>
+<div style="margin-top:10px" class="row"><span>Preťaženie siete</span><span id="stl">0 %</span></div>
+<div class="bar"><div id="stb"></div></div>
+<div id="msg" style="margin-top:8px"></div></div>
+
+<div class="card" style="grid-area:grid"><b>🔌 Distribučná sieť</b>
+<svg id="gs" viewBox="0 0 400 300" style="width:100%;height:auto;display:block">
+<line id="l1" x1="50" y1="50" x2="160" y2="132"/><line id="l2" x1="50" y1="150" x2="156" y2="150"/><line id="l3" x1="50" y1="250" x2="160" y2="168"/>
+<line id="lB" x1="224" y1="150" x2="298" y2="150"/>
+<g font-size="26" text-anchor="middle"><text x="28" y="60">☢</text><text x="28" y="160">☀</text><text x="28" y="260">💧</text></g>
+<g font-size="12" text-anchor="middle"><text id="t1" x="60" y="86"></text><text id="t2" x="80" y="140"></text><text id="t3" x="60" y="228"></text></g>
+<circle id="nA" cx="190" cy="150" r="34" fill="var(--card)" stroke="var(--ok)" stroke-width="5"/>
+<circle id="nB" cx="335" cy="150" r="34" fill="var(--card)" stroke="var(--ok)" stroke-width="5"/>
+<g font-size="12" font-weight="600" text-anchor="middle"><text x="190" y="154">Mesto A</text><text x="335" y="154">Mesto B</text></g>
+<g font-size="11" text-anchor="middle"><text id="tA" x="190" y="204"></text><text id="tB" x="335" y="204"></text><text id="tL" x="262" y="136"></text><text id="tF" x="190" y="220"></text></g>
+</svg>
+<div class="row"><span>Prívod z elektrární → A: <b id="lfA">100</b> %</span></div><input type="range" id="lf" min="0" max="100" step="1" value="100" oninput="lfA.textContent=this.value">
+<div class="row"><span>◀ menej prepustí</span><span>viac prepustí ▶</span></div>
+<div class="row"><span>Vedenie A → B: <b id="lbA">85</b> %</span></div><input type="range" id="lb" min="0" max="100" step="1" value="85" oninput="lbA.textContent=this.value">
+<div class="row"><span>◀ menej prepustí</span><span>viac prepustí ▶</span></div>
+<div class="k">Koľko % kapacity vedenie pustí ďalej. A→B aj prívod sa zahrievajú nad cca 70 %. Škrtenie chráni vedenie, ale mesto dostane menej.</div></div>
+<div class="card" style="grid-area:chart"><canvas id="cv" width="900" height="220"></canvas>
+<div class="leg"><span><i style="background:var(--dem)"></i>Spotreba</span><span><i style="background:var(--ps)"></i>Dodávka</span><span><i style="background:var(--so)"></i>Solár (dostupný)</span></div></div>
+
+<div class="plants">
+<div class="card" style="grid-area:nu"><b style="color:var(--nu)">☢ Jadrová elektráreň</b>
+<div class="row"><span>Výkon: <b id="nuA">0</b> MW</span><span>cieľ: <b id="nuT">0</b> %</span></div>
+<input type="range" id="nu" min="50" max="100" value="60">
+<div class="row"><span>◀ menší výkon (50 %)</span><span>väčší výkon (100 %) ▶</span></div>
+<div class="k">Max. 1000 MW. Min. stabilný výkon 50 %, zmena max. 1 %/min (600 MW/h) podľa požiadaviek EUR.</div></div>
+
+<div class="card" style="grid-area:so"><b style="color:var(--so)">☀ Solárna elektráreň</b>
+<div class="row"><span>Výkon: <b id="soA">0</b> MW</span><span>dostupné: <b id="soM">0</b> MW</span></div>
+<input type="range" id="so" min="0" max="100" value="100">
+<div class="row"><span>◀ menší výkon (0 %)</span><span>väčší výkon (100 %) ▶</span></div>
+<div class="k">Posuvník doprava = vyšší výkon (podiel z dostupného slnka, max. 800 MW).</div></div>
+
+<div class="card" style="grid-area:ps"><b style="color:var(--ps)">💧 Prečerpávacia nádrž</b>
+<div class="row"><span id="psA">0 MW</span><span>hladina: <b id="psL">0</b> %</span></div>
+<input type="range" id="ps" min="-400" max="400" value="0" step="10">
+<div class="row"><span>◀ čerpá (−400 MW, odoberá zo siete)</span><span>turbína (+400 MW, dodáva do siete) ▶</span></div>
+<div class="bar"><div id="psb" style="background:var(--ps)"></div></div>
+<div class="k">5 GWh, účinnosť čerpania 80 %. Čerpanie spotrebuje elektrinu z výroby.</div></div>
+</div>
+
+<div class="card" id="scc" style="grid-area:sc"><div class="grid">
+<div><div class="k">🏦 Bankový účet</div><div class="v" id="mo">0 €</div><div class="k" id="pr"></div></div>
+<div><div class="k">🌍 Emisie CO₂</div><div class="v" id="em">0 t</div><div class="k" id="emi">zo záložných zdrojov</div></div>
+<div><div class="k">Dodané</div><div class="v" id="sc">0 GWh</div></div>
+<div><div class="k">Strata bilancie</div><div class="v" id="ls">0 GWh</div></div></div>
+<div class="row" style="margin-top:10px"><span>😊 Spokojnosť ľudí</span><span id="sat">100 %</span></div><div class="bar"><div id="satb" style="width:100%"></div></div>
+<div class="k" style="margin-top:6px">Hra beží, kým nezbankrotuješ: bankrot = účet mesiac v mínuse, alebo dlh vyšší než zárobok za 3 mesiace. Nízka spokojnosť znižuje príjmy.</div></div>
+
+<div class="card" id="end" style="grid-area:end"><div class="v" id="et"></div><div id="es" class="k"></div><br><button onclick="init()">Hrať znova</button></div>
+</main>
+<script>
+const DT=1,MAXT=72,TOL=200,$=id=>document.getElementById(id);
+let S,timer,speed=1,paused=false;
+function demandBase(h){const g=(m,s)=>Math.exp(-Math.pow((h-m)/s,2));return 900+250*g(8,2.4)+320*g(19,2.6)+80*g(13,2)}
+const START=5e6;
+// mesačné tabuľky (január..december): východ/západ slnka, špička FV, priemerná oblačnosť, sezónna spotreba, priemerná veľkoobchodná cena SK 2025 (€/MWh)
+const SM={d0:[7.3,6.8,6,5.8,5,4.6,4.8,5.4,6,6.6,6.5,7.2],d1:[16.2,17.2,18,19.6,20.5,21.2,21,20.2,19,17.7,16.3,15.8],pk:[.28,.4,.55,.7,.78,.8,.8,.76,.66,.48,.4,.28],cl:[.35,.4,.48,.52,.56,.58,.6,.6,.54,.46,.42,.36],dm:[1.08,1.07,1.02,.96,.92,.9,.89,.9,.95,1,1.04,1.08],pm:[140,153,105,85,77,80,90,88,94,98,120,111]};
+function cloud(t,c){return Math.max(.1,Math.min(1,c+.35*Math.sin(t*.9+1)*Math.sin(t*.23)))}
+function nextSurge(t){return t+7+Math.random()*8}
+function init(){S={t:0,nuc:600,lvl:.5,hist:[],stress:0,served:0,lost:0,money:START,em:0,sat:100,negH:0,days:[],L:{b:{h:0,t:0},f:{h:0,t:0}},dayStart:START,last:null,surge:null,nextS:nextSurge(72),over:false};
+$('end').style.display='none';$('nu').value=60;$('so').value=100;$('ps').value=0;clearInterval(timer);run();tick()}
+function run(){clearInterval(timer);timer=setInterval(tick,500/speed)}
+function tick(){
+if(paused||S.over)return;
+const h=S.t%24,mon=new Date(2026,10,6,Math.floor(S.t)).getMonth(),sun=Math.max(0,Math.sin(Math.PI*(h-SM.d0[mon])/(SM.d1[mon]-SM.d0[mon])))*SM.pk[mon];
+// surge scheduling: warning 1h ahead, lasts 3h
+let warn='';
+if(!S.surge&&S.t>=S.nextS-1){S.surge={start:S.nextS,end:S.nextS+3,d:(Math.random()<.65?1:-1)*(150+Math.random()*150)*(.4+.6*Math.min(1,S.t/168))}}
+let sg=0;
+if(S.surge){if(S.t>=S.surge.start&&S.t<S.surge.end)sg=S.surge.d;
+ else if(S.t<S.surge.start)warn=(S.surge.d>0?'⚠ Varovanie: Nemecko o hodinu zvýši odber o ~':'⚠ Varovanie: Nemecko o hodinu zníži odber o ~')+Math.abs(Math.round(S.surge.d))+' MW';
+ else{S.surge=null;S.nextS=nextSurge(S.t)}}
+const ramp=.4+.6*Math.min(1,S.t/168),dB0=demandBase(h)*ramp*SM.dm[mon],dem=dB0+sg;
+// nuclear ramp
+const tgt=$('nu').value/100*1000,r=600*DT;
+S.nuc+=Math.max(-r,Math.min(r,tgt-S.nuc));
+// solar
+const sMax=800*sun*cloud(S.t,SM.cl[mon]),sol=sMax*$('so').value/100;
+// pumped storage
+let p=+$('ps').value;
+if(p>0)p=Math.min(p,S.lvl*5000/DT);
+if(p<0)p=-Math.min(-p,(1-S.lvl)*5000/DT/.8);
+S.lvl+=p>0?-p*DT/.97/5000:-p*DT*.8/5000;
+S.lvl=Math.max(0,Math.min(1,S.lvl));
+const net=S.nuc+sol+p,imb=net-dem,freq=50+imb/2000;
+const G=gridStep(dem,net);S.stress=G.maxHeat;
+S.served+=Math.min(net,dem)*DT/1000;S.lost+=Math.abs(imb)*DT/1000;
+const price=Math.max(5,SM.pm[mon]+.18*(dB0/ramp/SM.dm[mon]-1075)-.07*sol+(sg>0?40:sg<0?-30:0)),defi=Math.max(0,dem-net),sup=G.served,shortage=Math.max(defi,G.nNeed-G.served);
+S.money+=sup*DT*price*(.4+.6*S.sat/100)-(1000*17+S.nuc*8+900)*DT-Math.abs(imb)*DT*price*.5-Math.abs(p)*DT*3-Math.max(0,50-S.sat)*DT*40;
+const emR=shortage*.49+S.nuc*.012+sol*.048;S.em+=emR*DT;
+{const tg=Math.max(0,Math.min(100,100-Math.max(0,emR-80)*.25-70*G.lostDem/dem-90*G.low));S.sat+=(tg-S.sat)*(tg<S.sat?.115:.22)}
+S.hist.push({d:dem,n:net,s:sMax});if(S.hist.length>96)S.hist.shift();
+if(Math.floor((S.t+DT)/24)>Math.floor(S.t/24)){S.last=S.money-S.dayStart;S.dayStart=S.money;S.days.push(S.last);if(S.days.length>90)S.days.shift()}S.t+=DT;const earn3=S.days.length>=3?Math.max(1e6,S.days.reduce((a,b)=>a+b,0)/S.days.length*90):Infinity;
+// UI
+const dd=new Date(2026,10,6,Math.floor(S.t));$('clock').textContent=dd.toLocaleDateString('sk-SK',{day:'numeric',month:'long',year:'numeric'})+', '+String(dd.getHours()).padStart(2,'0')+':00';
+$('dem').textContent=Math.round(dem)+' MW';$('net').textContent=Math.round(net)+' MW';
+$('freq').textContent=freq.toFixed(2).replace('.',',')+' Hz';
+$('freq').style.color=Math.abs(imb)>TOL?'var(--bad)':'var(--ok)';
+$('stl').textContent=Math.round(S.stress)+' %';$('stb').style.width=S.stress+'%';
+$('stb').style.background=S.stress>60?'var(--bad)':S.stress>25?'var(--so)':'var(--ok)';
+$('nuA').textContent=Math.round(S.nuc);$('nuT').textContent=$('nu').value;
+$('soA').textContent=Math.round(sol);$('soM').textContent=Math.round(sMax);
+$('psA').textContent=(p>=0?'Turbína ':'Čerpá ')+Math.abs(Math.round(p))+' MW';
+$('psL').textContent=Math.round(S.lvl*100);$('psb').style.width=S.lvl*100+'%';
+$('sc').textContent=S.served.toFixed(1).replace('.',',')+' GWh';$('ls').textContent=S.lost.toFixed(1).replace('.',',')+' GWh';
+const m=S.money;$('mo').textContent=Math.abs(m)>=1e6?(m/1e6).toFixed(2).replace('.',',')+' M€':Math.round(m/1e3)+' tis. €';$('mo').style.color=m<0?'var(--bad)':'var(--ok)';
+$('pr').innerHTML='dnes <b>'+fmtk(S.money-S.dayStart)+'</b>'+(S.last!==null?' · včera '+fmtk(S.last):'')+'<br>spolu '+fmtk(S.money-START)+' · cena '+Math.round(price)+' €/MWh'+(S.negH>0?'<br><span style="color:var(--bad)">⚠ v mínuse '+Math.round(S.negH/24)+' dní z 30 · dlh '+(-S.money/1e6).toFixed(1)+' M€ / limit '+(earn3===Infinity?'–':(earn3/1e6).toFixed(1)+' M€')+'</span>':'');$('em').textContent=Math.round(S.em)+' t';$('emi').textContent='intenzita '+Math.round(sup>0?emR/sup*1000:0)+' g/kWh';
+$('sat').textContent=Math.round(S.sat)+' %';$('satb').style.width=S.sat+'%';$('satb').style.background=S.sat<35?'var(--bad)':S.sat<65?'var(--so)':'var(--ok)';
+$('msg').textContent=warn||G.msg||(imb>TOL?'Prebytok '+Math.round(imb)+' MW – sieť sa preťažuje, uber výrobu alebo čerpaj.':imb<-TOL?'Deficit '+Math.round(-imb)+' MW – pridaj výkon alebo vypni čerpanie.':'Sieť je stabilná.');
+$('msg').style.color=(warn||G.msg||Math.abs(imb)>TOL)?'var(--bad)':'var(--ok)';
+draw();flows(S.nuc,sol,p,G);
+S.negH=S.money<0?S.negH+DT:0;if(S.negH>=720)finish(false,'Bankrot – účet bol mesiac v mínuse.');else if(S.money<0&&-S.money>earn3)finish(false,'Bankrot – dlh '+(-S.money/1e6).toFixed(1)+' M€ prevyšuje zárobok za 3 mesiace.');
+}
+function finish(win,why){S.over=true;$('end').style.display='block';
+$('et').textContent=win?'🎉 Zvládol si to!':'💥 '+why;
+$('es').textContent='Dodané spotrebe: '+S.served.toFixed(1)+' GWh, prežité '+S.t.toFixed(0)+' h, zisk '+Math.round(S.money/1000)+' tis. €, emisie '+Math.round(S.em)+' t CO₂, spokojnosť '+Math.round(S.sat)+' %.'}
+const CAP={b:600,f:1400};
+function fmtk(v){return (v>=0?'+':'')+Math.round(v/1e3)+' tis. €'}
+function gridStep(dem,net){
+const L=S.L,TB=+$('lb').value/100*900,TF=+$('lf').value/100*2000,d={A:.6*dem,B:.4*dem};
+const fo=L.f.t>0,cut={A:fo,B:fo||L.b.t>0},nA=cut.A?0:d.A,nB=cut.B?0:d.B;
+const ent=fo?0:Math.min(net,TF),sA=Math.min(nA,ent),e=Math.max(0,ent-nA-nB);
+const req=nB+.5*e,fb=cut.B?0:Math.min(req,TB,Math.max(0,ent-sA)),sB=Math.min(nB,fb);
+const stuck=cut.B?0:Math.max(0,req-Math.max(fb,nB));
+const lostDem=(cut.A?d.A:0)+(cut.B?d.B:0),fF=fo?0:ent+.8*lostDem+.8*stuck;
+let mh=0;
+const upd=(k,load,cap,slow)=>{const l=L[k];if(l.t>0){l.t--;if(l.t==0)l.h=40}else{const r=load/cap;if(r>1)l.h+=(r-1)*240*slow;else l.h=Math.max(0,l.h-16);if(l.h>=100){l.h=100;l.t=2}}mh=Math.max(mh,l.h)};
+upd('b',fb,CAP.b,1);upd('f',fF,CAP.f,.5);
+const need=nA+nB,served=sA+sB,low=need>0?Math.max(0,(need-served)/need):0;
+const off=[cut.A&&'Mesto A',cut.B&&'Mesto B'].filter(Boolean);
+let msg='';if(off.length)msg='⚡ Výpadok: '+off.join(', ');else if(L.f.h>50)msg='⚠ Preťažený prívod z elektrární!';else if(L.b.h>50)msg='⚠ Preťažené vedenie A→B!';else if(sB<nB-5)msg='Mesto B dostáva menej energie, než potrebuje (vedenie je škrtené).';
+return{d,cut,fb,sA,sB,nA,nB,served,nNeed:need,low,lostDem,maxHeat:mh,msg}}
+function flows(n,s,p,G){
+const cs=getComputedStyle(document.documentElement),c=v=>cs.getPropertyValue(v);
+const f=(id,mw,col,rev,cap)=>{const e=$(id);e.style.strokeWidth=1+Math.abs(mw)/(cap||1000)*10;e.style.stroke=col;e.classList.toggle('rev',!!rev)};
+f('l1',n,c('--nu'));f('l2',s,c('--so'));f('l3',p,c('--ps'),p<0);
+$('t1').textContent=Math.round(n)+' MW';$('t2').textContent=Math.round(s)+' MW';$('t3').textContent=(p>=0?'+':'')+Math.round(p)+' MW';
+const col=h=>h>=100?c('--bad'):h>50?c('--so'):c('--ok'),L=S.L;
+const node=(id,off,color,fill)=>{$(id).style.stroke=off?c('--bad'):color;$(id).style.fill=off?'var(--bd)':'var(--card)'};
+node('nA',G.cut.A,col(L.f.h));node('nB',G.cut.B,G.sB<G.nB-5?c('--so'):col(L.b.h));
+f('lB',G.fb,G.cut.B?c('--bad'):col(L.b.h),false,1000);
+$('tA').textContent=G.cut.A?'výpadok':Math.round(G.sA)+' / '+Math.round(G.d.A)+' MW';
+$('tB').textContent=G.cut.B?'výpadok':Math.round(G.sB)+' / '+Math.round(G.d.B)+' MW';
+$('tL').textContent='vedenie '+Math.round(L.b.h)+' %';
+$('tF').textContent='prívod '+Math.round(L.f.h)+' %';$('tF').style.fill=col(L.f.h)}
+function draw(){const c=$('cv'),x=c.getContext('2d'),W=c.width,H=c.height,cs=getComputedStyle(document.documentElement);
+x.clearRect(0,0,W,H);const mx=2400;
+x.strokeStyle=cs.getPropertyValue('--bd');x.fillStyle=cs.getPropertyValue('--mu');x.font='11px sans-serif';
+for(let v=0;v<=2400;v+=600){const y=H-v/mx*H;x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke();x.fillText(v+' MW',4,y-2)}
+const line=(k,col,w)=>{x.beginPath();x.strokeStyle=cs.getPropertyValue(col);x.lineWidth=w;S.hist.forEach((q,i)=>{const px=i/95*W,py=H-Math.max(0,q[k])/mx*H;i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke()};
+line('s','--so',1.5);line('d','--dem',2);line('n','--ps',2.5)}
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{speed=+b.dataset.s;document.querySelectorAll('[data-s]').forEach(o=>o.classList.toggle('on',o===b));run()});
+$('p').onclick=()=>{paused=!paused;$('p').textContent=paused?'Pokračovať':'Pauza'};
+init();
+</script></body></html>
