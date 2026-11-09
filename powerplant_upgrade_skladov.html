@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+
+<html lang="sk"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Powerplant — Spojená hra</title><style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font:14px system-ui,Arial;background:#0b1720;color:#eaf3f5;overflow:hidden}
+#shell{height:100%;display:flex;flex-direction:column}.nav{height:54px;flex:none;display:flex;align-items:center;gap:10px;padding:7px 15px;background:#0d222b;border-bottom:1px solid #35515a;z-index:2}
+.brand{font-weight:800;font-size:18px;letter-spacing:.2px;margin-right:15px}.brand em{font-style:normal;color:#5bd1a2}
+.nav button{background:#1a3b44;color:#e8f5f4;border:1px solid #3a646c;border-radius:8px;padding:8px 14px;cursor:pointer}.nav button.active{background:#267e72;border-color:#7ce1bd}.nav .status{margin-left:auto;font-size:12px;color:#a7c8ca;text-align:right}
+.frame{width:100%;border:0;flex:1;min-height:0;display:none;background:#0c1821}.frame.active{display:block}
+@media(max-width:600px){.brand{font-size:14px;margin-right:0}.nav{padding:5px;gap:5px}.nav button{padding:8px}.nav .status{font-size:10px}}
+
+.nav{height:62px;gap:12px;padding:9px 18px;background:#0c202a;z-index:12;box-shadow:0 4px 20px #0004}.topmetrics{display:flex;gap:9px;align-items:center;margin-left:auto}.topmetrics span{padding:9px 13px;border:1px solid #35535c;border-radius:9px;background:#16323b;font-weight:650;white-space:nowrap}.nav button{white-space:nowrap}.frame{display:none!important}.frame#world{display:block!important;position:absolute;inset:62px 0 76px;width:100%;height:calc(100% - 138px)}#shell{position:relative}
+.drawer{position:absolute;top:62px;bottom:76px;width:min(335px,86vw);z-index:8;background:#10252eeF;border:1px solid #375660;box-shadow:0 10px 40px #0008;overflow:auto;padding:16px;transition:transform .22s ease}.drawer.left{left:0;border-radius:0 15px 15px 0}.drawer.right{right:0;border-radius:15px 0 0 15px}.drawer.left.closed{transform:translateX(-103%)}.drawer.right.closed{transform:translateX(103%)}.drawerHead,.paletteHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.drawerHead button,.paletteHead button{background:#213f49;color:#fff;border:1px solid #42616a;border-radius:8px;padding:5px 10px;cursor:pointer}.mutedUi{color:#9ab5ba;font-size:12px;line-height:1.5;margin-top:15px}.plantCard{padding:13px;border:1px solid #31515b;border-radius:12px;background:#18313b;margin-bottom:10px}.plantCard .plantTitle{font-weight:700;margin-bottom:8px}.plantCard .plantMeta{display:flex;justify-content:space-between;color:#b9d1d4;font-size:12px}.plantCard input{width:100%;accent-color:#4bd0a3;margin:11px 0 4px}.plantCard small{color:#8eacb3}.detailRow{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #304a54;padding:12px 0}.detailRow span{color:#a9c3c8}.detailRow strong{text-align:right}#buildBar{position:absolute;bottom:0;left:0;right:0;height:76px;z-index:13;background:#0c2029;border-top:1px solid #39545e;display:flex;gap:9px;align-items:center;padding:10px 16px;box-shadow:0 -5px 25px #0006}#buildBar button{background:#17343e;border:1px solid #365b64;border-radius:12px;color:#e9f4f2;cursor:pointer;min-width:102px;height:55px;font-size:21px}#buildBar button span{display:block;font-size:11px;margin-top:2px}#buildBar button.selected{border-color:#64d7b5;background:#23574e}#buildBar #cancelBuild{font-size:12px;min-width:85px;height:39px}.buildStatus{flex:1;color:#a4c4c6;font-size:12px;text-align:right}#buildPalette{position:absolute;bottom:84px;left:16px;width:min(460px,calc(100vw - 32px));max-height:min(440px,65vh);overflow:auto;background:#102731;border:1px solid #4b7079;border-radius:16px;z-index:14;padding:16px;box-shadow:0 15px 45px #0009}#paletteItems{display:grid;grid-template-columns:1fr 1fr;gap:9px}.catalogItem{background:#193943;border:1px solid #3b5d66;color:#e8f4f2;border-radius:11px;padding:12px;cursor:pointer;text-align:left}.catalogItem:hover,.catalogItem.selected{background:#255a54;border-color:#6dd9b9}.catalogItem b{display:block;font-size:13px}.catalogItem small{display:block;color:#afc6c9;margin-top:6px}#toast{position:absolute;bottom:88px;left:50%;transform:translateX(-50%);background:#102a32;border:1px solid #69bfae;padding:10px 18px;border-radius:10px;z-index:18;pointer-events:none;display:none;max-width:90vw;text-align:center}@media(max-width:750px){.brand{font-size:13px}.topmetrics{gap:3px}.topmetrics span{font-size:11px;padding:6px}.nav{gap:4px;padding:5px}.nav button{padding:6px;font-size:11px}#buildBar{gap:4px;padding:5px}#buildBar button{min-width:60px;flex:1;font-size:18px}#buildBar button span{font-size:9px}.buildStatus{display:none}#buildBar #cancelBuild{min-width:56px;font-size:10px}}
+
+.nav{height:74px;min-height:74px;max-height:74px;--nav-height:74px;flex-wrap:nowrap;gap:8px;overflow-x:auto;overflow-y:hidden}.frame#world{top:var(--nav-height,74px);bottom:76px;inset:var(--nav-height,74px) 0 76px;height:auto}.drawer{top:var(--nav-height,74px)}.topmetrics{gap:7px;flex-wrap:nowrap;flex:none;margin-left:0}.clockWrap{display:flex;align-items:center;gap:6px;border:1px solid #35535c;background:#16323b;border-radius:10px;padding:3px 7px}.clockWrap #topClock{width:52px;height:52px;flex:none}.clockWrap #clockText{font-weight:700;font-variant-numeric:tabular-nums}.clockWrap #pauseClock{padding:4px 7px;font-size:14px}.topSatisfaction{width:172px;min-width:172px;flex:none;border:1px solid #35535c;background:#16323b;border-radius:9px;padding:5px 9px;font-size:12px;cursor:help}.topSatisfaction span{padding:0;border:0;background:none;font-weight:500}.topSatisfaction b{float:right}.satTrack{height:8px;background:#3d5055;border-radius:10px;margin-top:5px;overflow:hidden}.satTrack>div{width:100%;height:100%;background:#39bc7a;transition:width .25s}.emissionMetric{cursor:help}.weatherBanner{order:0;flex:1 1 210px;min-width:135px;max-width:420px;display:flex;align-items:center;gap:12px;border:1px solid #e7bb64;background:#513c21;color:#ffe8b1;padding:5px 12px;border-radius:9px;box-shadow:0 0 16px #e7aa4344}.weatherBanner[hidden]{display:none}.weatherBanner small{color:#f7dba5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.weatherBanner b{white-space:nowrap}@media(max-width:750px){.clockWrap #topClock{width:40px;height:40px}.topSatisfaction{width:172px;min-width:172px}.weatherBanner{font-size:11px}}
+
+/* Oprava: výška navigácie a mapy sa nesmie prekrývať ani orezávať. */
+html,body{min-height:100%;height:100%;}
+#shell{height:100dvh;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.nav{position:relative;flex:0 0 auto;min-height:74px;height:auto;max-width:100%;align-content:center}
+.frame#world{position:relative!important;inset:auto!important;top:auto!important;bottom:auto!important;left:auto!important;right:auto!important;flex:1 1 auto!important;min-height:0!important;height:0!important;width:100%!important;display:block!important}
+.drawer{top:var(--nav-height,74px);bottom:76px;max-height:calc(100% - var(--nav-height,74px) - 76px)}
+#buildBar{flex-shrink:0}
+@media(max-width:750px){.nav{padding:7px;gap:6px}.topmetrics{margin-left:0;flex:1 1 auto;min-width:0}.topmetrics span{white-space:nowrap}.weatherBanner{min-width:0}.weatherBanner small{overflow-wrap:anywhere}}
+#uiMoney{display:inline-block;min-width:108px;text-align:center;font-variant-numeric:tabular-nums}#topSatValue{display:inline-block;min-width:42px;text-align:right;font-variant-numeric:tabular-nums}.emissionMetric{display:inline-block;min-width:128px;font-variant-numeric:tabular-nums}.clockWrap{flex:none}.nav>.brand{flex:none}.nav>button{flex:none}.weatherBanner[hidden]{display:none!important}.weatherBanner{height:54px;overflow:hidden}.weatherBanner small{display:block}.weatherBanner b{display:block}.nav{scrollbar-width:thin}@media(max-width:900px){.weatherBanner{min-width:150px;max-width:240px}}
+
+/* Fixed-width top bar with event on the left and metrics on the right */
+.nav{display:flex!important;flex-wrap:nowrap!important;overflow:hidden!important;width:100%;height:74px!important;min-height:74px!important;max-height:74px!important;gap:8px!important}
+.nav .brand{flex:0 0 auto;margin-right:0;white-space:nowrap}
+.nav .weatherBanner{order:0;flex:1 1 auto;min-width:0;max-width:none;margin:0;height:54px;overflow:hidden}
+.nav .weatherBanner[hidden]{display:flex!important;visibility:hidden;border-color:transparent;box-shadow:none;background:transparent}
+.nav .weatherBanner b{flex:0 0 auto;max-width:45%;overflow:hidden;text-overflow:ellipsis}
+.nav .weatherBanner small{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav .topmetrics{order:1;margin-left:auto;flex:0 0 auto;gap:5px;min-width:0}
+.nav #toggleLeft,.nav #toggleRight{order:2;flex:0 0 auto}
+.nav .topmetrics>span{padding:7px 8px;font-variant-numeric:tabular-nums}
+.nav #uiDate{width:auto;min-width:160px;flex:none;overflow:visible;text-overflow:clip;white-space:nowrap}
+.nav #uiMoney{width:102px;text-align:center}
+.nav .clockWrap{flex:0 0 auto}
+.nav .clockWrap #clockText{display:none}
+.nav .topSatisfaction{width:166px;min-width:166px;flex:0 0 166px}
+.nav .topSatisfaction b{display:inline-block;width:43px;text-align:right;font-variant-numeric:tabular-nums}
+.nav .emissionMetric{width:126px;min-width:126px;display:flex;align-items:center;justify-content:space-between;gap:3px;overflow:hidden}
+.nav .emissionMetric b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.speedLabel{display:flex;align-items:center;gap:3px;font-size:12px;color:#c5e6df;white-space:nowrap}
+.speedLabel input{width:54px;height:30px;padding:3px 4px;border-radius:6px;background:#102832;color:#fff;border:1px solid #547b80;font:inherit;font-variant-numeric:tabular-nums}
+.metricHint{cursor:help}
+@media(max-width:1200px){.nav .brand{font-size:13px}.nav .weatherBanner small{display:none}.nav .weatherBanner b{max-width:100%}.nav #uiDate{min-width:160px;width:auto}.nav .topSatisfaction{width:143px;min-width:143px;flex-basis:143px}}
+@media(max-width:950px){.nav .brand{display:none}.nav .weatherBanner{flex-basis:40px}.nav #uiMoney{display:none}.nav .emissionMetric{width:96px;min-width:96px}.nav .topSatisfaction{width:125px;min-width:125px;flex-basis:125px}}
+@media(max-width:700px){.nav{gap:3px!important;padding:5px!important}.nav #uiDate{display:inline-flex;min-width:160px}.nav .weatherBanner{min-width:24px}.nav .topSatisfaction{width:110px;min-width:110px;flex-basis:110px}.nav .emissionMetric{display:none}.nav #toggleLeft,.nav #toggleRight{font-size:10px;padding:5px}.nav .clockWrap #topClock{width:34px;height:34px}}
+.nav #pauseClock{display:inline-flex;align-items:center;justify-content:center;width:38px;min-width:38px;height:34px;flex:none;line-height:1;white-space:nowrap}.nav .weatherBanner{min-width:32px;flex-shrink:1}.nav .topmetrics{flex-shrink:0}.nav #uiDate{font-size:12px}
+</style></head><body><div id="shell"><nav class="nav"><span class="brand">⚡ POWERPLANT <em>WORLD</em></span><div class="weatherBanner" hidden="" id="weatherBanner"><b id="weatherTitle"></b><small id="weatherDesc"></small></div><div class="topmetrics"><span id="uiDate">Deň 1</span><div class="clockWrap" id="uiClock"><svg aria-label="24-hodinové hodiny" id="topClock" viewbox="0 0 100 100"><circle cx="50" cy="50" fill="#1b2240" r="47"></circle><path fill="#bfe3ff" id="clockDay"></path><path fill="#1b2240" id="clockNight"></path><path fill="none" id="clockDayRim" stroke="#85c9f5" stroke-width="4"></path><path fill="none" id="clockNightRim" stroke="#6d80ac" stroke-width="4"></path><g id="clockTicks" stroke="#ffffff99" stroke-width="1.6"></g><line id="clockHand" stroke="#fa6969" stroke-linecap="round" stroke-width="4" x1="50" x2="50" y1="50" y2="18"></line><circle cx="50" cy="50" fill="#fa6969" r="3"></circle></svg><button id="pauseClock" title="Pozastaviť alebo spustiť čas">⏸</button><label class="speedLabel" title="Rýchlosť simulácie">× <input id="customSpeed" type="number" min="0.1" max="100" step="0.1" value="1" aria-label="Násobiteľ rýchlosti simulácie"></label></div><span id="uiMoney">5,00 M€</span><div class="topSatisfaction" title="Aktuálna spokojnosť"><span>😊 Spokojnosť <b id="topSatValue">100 %</b></span><div class="satTrack"><div id="topSatBar"></div></div></div><span class="emissionMetric" id="topEmissions" title="Emisie CO₂">🌍 CO₂ <b id="topEmValue">0 t</b></span></div><button id="toggleLeft" title="Elektrárne">☰ Elektrárne</button><button id="toggleRight" title="Štatistiky">▤ Štatistiky</button></nav>
+<iframe class="frame active" id="world" sandbox="allow-scripts allow-same-origin" srcdoc="&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;sk&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;/&gt;&lt;meta content=&quot;width=device-width,initial-scale=1&quot; name=&quot;viewport&quot;/&gt;&lt;title&gt;Powerplant — Procedurálny svet&lt;/title&gt;&lt;style&gt;
+:root{font-family:Inter,system-ui,Arial,sans-serif;color:#e8f0ee;background:#0a1418}*{box-sizing:border-box}body{margin:0;overflow:hidden}button,input,select{font:inherit}button{cursor:pointer;background:#203b42;color:#e9f5f3;border:1px solid #41606a;border-radius:9px;padding:9px 12px}button:hover{background:#2d5058}button.primary{background:#2e9e83;border-color:#5bc7aa;color:#061d1a;font-weight:750}button:disabled{opacity:.4;cursor:not-allowed}input,select{background:#10282f;color:#eef8f5;border:1px solid #42606a;border-radius:8px;padding:9px;width:100%}label{font-size:12px;color:#b1c6c5;display:block;margin-bottom:6px}.top{position:absolute;top:0;left:0;right:0;height:64px;display:flex;align-items:center;gap:12px;padding:10px 18px;background:#0b1c22eF;border-bottom:1px solid #32515b;z-index:3}.brand{font-size:19px;font-weight:800;letter-spacing:-.4px}.subtitle{font-size:12px;color:#a9c4c6}.grow{flex:1}.pill{background:#1a333b;padding:8px 12px;border-radius:9px;font-size:13px;white-space:nowrap}.world{position:absolute;inset:64px 0 0;background:#163a4d;cursor:default}.world.panning{cursor:grabbing}canvas{width:100%;height:100%;display:block}.panel{position:absolute;right:14px;top:78px;width:335px;max-height:calc(100vh - 95px);overflow:auto;background:#10232cf5;border:1px solid #385660;border-radius:15px;padding:17px;box-shadow:0 12px 40px #0008;z-index:4}.panel h2{margin:0 0 8px;font-size:21px}.muted{color:#9db8bd;font-size:12px;line-height:1.55}.statrow{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #28434b;font-size:14px}.statrow b{text-align:right}.chips{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.chip{font-size:11px;padding:5px 8px;background:#26434b;border-radius:6px}.hint{position:absolute;bottom:14px;left:14px;background:#0c2228e9;border:1px solid #35545b;border-radius:9px;padding:10px 13px;font-size:12px;color:#c2d6d6;z-index:2}.mini{position:absolute;left:14px;top:78px;background:#0d232bde;border:1px solid #41616a;border-radius:12px;padding:10px;z-index:2}.mini canvas{width:190px;height:132px;cursor:pointer}.modalback{position:absolute;inset:0;background:#061115e8;z-index:10;display:flex;align-items:center;justify-content:center;padding:18px}.modal{width:min(510px,100%);background:#122b33;border:1px solid #47646b;border-radius:20px;padding:28px;box-shadow:0 25px 70px #000a}.modal h1{margin:0 0 8px;font-size:28px}.modal p{color:#aac2c5;font-size:14px;line-height:1.6}.fields{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin:23px 0}.fields&gt;div:first-child{grid-column:span 2}.notice{background:#193840;border:1px solid #345a61;padding:12px;border-radius:10px;font-size:12px;color:#bcd3d4;margin:14px 0}.legend{position:absolute;left:14px;bottom:62px;background:#0b2027e8;border-radius:10px;padding:10px 12px;display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:#d2e2df;max-width:550px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px}.smallbtn{font-size:12px;padding:6px 9px}.footer-actions{display:flex;gap:8px;margin-top:16px}.footer-actions&gt;*{flex:1}.phase{background:#183942;border-radius:8px;padding:8px;margin-top:7px;font-size:12px;display:flex;justify-content:space-between}.phase.active{outline:1px solid #55c8a7}.display-controls{position:absolute;right:18px;bottom:18px;z-index:5;background:#102832ed;border:1px solid #45636c;border-radius:12px;padding:11px 13px;display:flex;align-items:center;gap:10px;box-shadow:0 10px 35px #0007}.display-controls label{margin:0;white-space:nowrap;color:#e2f3ee;font-size:13px}.display-controls select{width:auto;min-width:175px;padding:8px}.error{color:#ffb7a5;font-size:12px;min-height:18px;margin-top:8px}@media(max-width:650px){.subtitle,.mini,.legend{display:none}.top{padding:8px}.brand{font-size:15px}.pill{font-size:11px;padding:7px}.panel{right:8px;top:72px;width:min(320px,calc(100vw - 16px))}.hint{font-size:10px;max-width:260px}.modal{padding:19px}}
+.top{display:none!important}.world{inset:0!important}.hint{display:none!important}.legend{bottom:70px!important}.display-controls{bottom:70px!important}.mini{top:12px!important}.panel{top:12px!important;max-height:calc(100vh - 24px)!important}&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;header class=&quot;top&quot;&gt;&lt;div&gt;&lt;div class=&quot;brand&quot;&gt;⚡ POWERPLANT &lt;span style=&quot;color:#61c5aa&quot;&gt;WORLD&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;subtitle&quot;&gt;Procedurálne kontinenty · biomy · mestá&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;grow&quot;&gt;&lt;/div&gt;&lt;div class=&quot;pill&quot; id=&quot;worldInfo&quot;&gt;Pripravuje sa svet&lt;/div&gt;&lt;button class=&quot;smallbtn&quot; id=&quot;zoomOut&quot;&gt;−&lt;/button&gt;&lt;button class=&quot;smallbtn&quot; id=&quot;zoomIn&quot;&gt;+&lt;/button&gt;&lt;button id=&quot;newWorld&quot;&gt;Nový svet&lt;/button&gt;&lt;/header&gt;&lt;div class=&quot;world&quot; id=&quot;viewport&quot;&gt;&lt;canvas id=&quot;map&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;&lt;div class=&quot;mini&quot; hidden=&quot;&quot; id=&quot;miniWrap&quot;&gt;&lt;div class=&quot;muted&quot;&gt;MINIMAPA&lt;/div&gt;&lt;canvas id=&quot;mini&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;&lt;div class=&quot;legend&quot;&gt;&lt;span&gt;&lt;i class=&quot;dot&quot; style=&quot;background:#e7e7e1&quot;&gt;&lt;/i&gt;Hory&lt;/span&gt;&lt;span&gt;&lt;i class=&quot;dot&quot; style=&quot;background:#568b64&quot;&gt;&lt;/i&gt;Les&lt;/span&gt;&lt;span&gt;&lt;i class=&quot;dot&quot; style=&quot;background:#c8b57d&quot;&gt;&lt;/i&gt;Stepi&lt;/span&gt;&lt;span&gt;&lt;i class=&quot;dot&quot; style=&quot;background:#dbbd79&quot;&gt;&lt;/i&gt;Púšť&lt;/span&gt;&lt;span&gt;&lt;i class=&quot;dot&quot; style=&quot;background:#2e87a8&quot;&gt;&lt;/i&gt;Voda&lt;/span&gt;&lt;span&gt;&lt;i class=&quot;dot&quot; style=&quot;background:#34d399&quot;&gt;&lt;/i&gt;Dostatok&lt;/span&gt;&lt;span&gt;&lt;i class=&quot;dot&quot; style=&quot;background:#fbbf24&quot;&gt;&lt;/i&gt;Čiastočný odber&lt;/span&gt;&lt;span&gt;&lt;i class=&quot;dot&quot; style=&quot;background:#fb923c&quot;&gt;&lt;/i&gt;Veľký deficit&lt;/span&gt;&lt;span&gt;&lt;i class=&quot;dot&quot; style=&quot;background:#ef4444&quot;&gt;&lt;/i&gt;Bez elektriny&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;hint&quot;&gt;Pravé tlačidlo + ťahanie: pohyb · Koliesko: priblíženie · Kliknutie: mesto · Esc: zavrieť panel&lt;/div&gt;&lt;aside class=&quot;panel&quot; hidden=&quot;&quot; id=&quot;panel&quot;&gt;&lt;/aside&gt;&lt;div class=&quot;display-controls&quot;&gt;&lt;label for=&quot;cityVisibility&quot;&gt;Zobraziť&lt;/label&gt;&lt;select id=&quot;cityVisibility&quot;&gt;&lt;option value=&quot;all&quot;&gt;Všetky mestá&lt;/option&gt;&lt;option value=&quot;owned&quot;&gt;Iba moje mestá&lt;/option&gt;&lt;/select&gt;&lt;/div&gt;&lt;div class=&quot;modalback&quot; id=&quot;setup&quot;&gt;&lt;div class=&quot;modal&quot;&gt;&lt;h1&gt;🌍 Vytvor si vlastný svet&lt;/h1&gt;&lt;p&gt;Vygeneruj úplne nový fiktívny kontinent. Seed určuje tvar krajiny, biomy, vodu aj umiestnenie miest.&lt;/p&gt;&lt;div class=&quot;fields&quot;&gt;&lt;div&gt;&lt;label for=&quot;seed&quot;&gt;Seed sveta&lt;/label&gt;&lt;input id=&quot;seed&quot; maxlength=&quot;70&quot; value=&quot;POWERPLANT-2026&quot;/&gt;&lt;/div&gt;&lt;div&gt;&lt;label for=&quot;cityCount&quot;&gt;Počet miest (10–500)&lt;/label&gt;&lt;input id=&quot;cityCount&quot; max=&quot;500&quot; min=&quot;10&quot; type=&quot;number&quot; value=&quot;200&quot;/&gt;&lt;/div&gt;&lt;div&gt;&lt;label for=&quot;size&quot;&gt;Veľkosť mapy&lt;/label&gt;&lt;select id=&quot;size&quot;&gt;&lt;option value=&quot;normal&quot;&gt;Veľká (8 000 × 5 600)&lt;/option&gt;&lt;option selected=&quot;&quot; value=&quot;huge&quot;&gt;Obrovská (12 000 × 8 400)&lt;/option&gt;&lt;option value=&quot;giant&quot;&gt;Gigantická (16 000 × 11 200)&lt;/option&gt;&lt;/select&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;notice&quot;&gt;Po vytvorení klikni na ľubovoľné mesto na súši a odomkni si ho ako svoje prvé mesto zadarmo. Ďalšie mestá sa kupujú. Štartovacia elektráreň sa objaví pri vybranom meste.&lt;/div&gt;&lt;button class=&quot;primary&quot; id=&quot;generate&quot; style=&quot;width:100%&quot;&gt;Vygenerovať svet&lt;/button&gt;&lt;div class=&quot;error&quot; id=&quot;setupError&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;script&gt;
+(()=&gt;{'use strict';
+const $=id=&gt;document.getElementById(id), canvas=$('map'),ctx=canvas.getContext('2d'),mini=$('mini'),mc=mini.getContext('2d');
+const phases=[{name:'Noc',start:0,end:5,m:.62},{name:'Ráno',start:5,end:10,m:1.18},{name:'Doobeda',start:10,end:14,m:1.0},{name:'Poobede',start:14,end:18,m:1.12},{name:'Večer',start:18,end:23,m:1.34},{name:'Noc',start:23,end:24,m:.62}];
+let state=null,terrainCanvas=null,miniTerrain=null,pan={x:0,y:0,zoom:1},drag=null,selected=null,clock=18,playing=true,cityVisibility='all',lastFrame=performance.now();
+const clamp=(v,a,b)=&gt;Math.max(a,Math.min(b,v));const lerp=(a,b,t)=&gt;a+(b-a)*t;const smooth=t=&gt;t*t*(3-2*t);
+function seedHash(s){let h=2166136261;for(let i=0;i&lt;s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h&gt;&gt;&gt;0}
+function hash2(x,y,s){let h=Math.imul(x,374761393)+Math.imul(y,668265263)+Math.imul(s,1442695041);h=Math.imul(h^(h&gt;&gt;&gt;13),1274126177);return ((h^(h&gt;&gt;&gt;16))&gt;&gt;&gt;0)/4294967295}
+function noise(x,y,s){let a=Math.floor(x),b=Math.floor(y),u=smooth(x-a),v=smooth(y-b);return lerp(lerp(hash2(a,b,s),hash2(a+1,b,s),u),lerp(hash2(a,b+1,s),hash2(a+1,b+1,s),u),v)}
+function fbm(x,y,s,oct=5){let z=0,a=.5,n=0;for(let k=0;k&lt;oct;k++){z+=noise(x,y,s+k*97)*a;n+=a;x*=2.05;y*=2.05;a*=.5}return z/n}
+function rng(seed){let a=seed&gt;&gt;&gt;0;return ()=&gt;{a+=0x6D2B79F5;let t=a;t=Math.imul(t^(t&gt;&gt;&gt;15),t|1);t^=t+Math.imul(t^(t&gt;&gt;&gt;7),t|61);return ((t^(t&gt;&gt;&gt;14))&gt;&gt;&gt;0)/4294967296}}
+function terrain(x,y){
+ const s=state.hash,W=state.w,H=state.h,nx=x/W,ny=y/H;
+ // Povinný oceánsky prstenec okolo CELÉHO sveta. Ani najvyšší šum
+ // nesmie vytvoriť pevninu na okraji textúry.
+ const border=Math.min(nx,ny,1-nx,1-ny);
+ if(border&lt;=0.045)return {e:.24,moist:.5,heat:.5};
+ const warpX=(fbm(nx*4.8,ny*4.8,s+51,3)-.5)*.12;
+ const warpY=(fbm(nx*4.8,ny*4.8,s+72,3)-.5)*.12;
+ const X=nx+warpX,Y=ny+warpY;
+ const dx=(X-.51)/.56,dy=(Y-.50)/.58,edge=Math.pow(dx*dx+dy*dy,.65);
+ let e=.64-edge*.39+(fbm(X*5.1,Y*5.1,s+10)-.5)*.47+(fbm(X*19,Y*19,s+15,3)-.5)*.13;
+ // Od 4.5 % do 13 % rozmeru sa terén plynule vynorí z mora.
+ const coast=smooth(clamp((border-.045)/.085,0,1));
+ e=lerp(.24,e,coast);
+ const moist=fbm(nx*7,ny*7,s+123,4);
+ const heat=clamp(1-Math.abs(ny-.52)*1.35+(fbm(nx*3,ny*3,s+99,3)-.5)*.34,0,1);
+ return {e,moist,heat};
+}
+const SEA=.43;function land(x,y){return terrain(x,y).e&gt;SEA}
+function color(t){let {e,moist,heat}=t;if(e&lt;=SEA-.085)return '#163b53';if(e&lt;=SEA-.022)return '#205875';if(e&lt;=SEA)return '#2c7892';if(e&lt;SEA+.018)return '#d6c8a0';if(e&gt;.81)return heat&lt;.45?'#e9e9df':'#a8aaa4';if(e&gt;.72)return heat&lt;.37?'#c6d2cc':'#777f78';if(heat&lt;.26)return moist&gt;.5?'#78948a':'#a4b2aa';if(moist&lt;.27&amp;&amp;heat&gt;.53)return '#d6b778';if(moist&lt;.39)return heat&gt;.6?'#c3ad78':'#a5ad7d';if(moist&gt;.63)return heat&gt;.64?'#3e8a64':'#477e5d';return moist&gt;.49?'#588967':'#82a071'}
+// Rieky majú garantované ústie: buď priamo v mori, alebo cez jazero
+// a následný odtok z jazera do mora. Trasy sú deterministické podľa seedu.
+function riverToSea(sx,sy,seed,stopLake=false){
+ const r=rng(seed),step=Math.min(state.w,state.h)/145;
+ // Nájdeme najbližší dosiahnuteľný oceán vo viacerých smeroch.
+ let target=null,best=Infinity;
+ for(let i=0;i&lt;32;i++){
+  const a=i*Math.PI/16;
+  for(let k=1;k&lt;190;k++){
+   const xx=sx+Math.cos(a)*k*step,yy=sy+Math.sin(a)*k*step;
+   if(xx&lt;0||yy&lt;0||xx&gt;=state.w||yy&gt;=state.h)break;
+   if(!land(xx,yy)){
+    const d=k*step+(r()-.5)*step*.3;
+    if(d&lt;best){best=d;target=[xx,yy]}
+    break;
+   }
+  }
+ }
+ if(!target)return null;
+ const pts=[[sx,sy]];let x=sx,y=sy;
+ const dx=target[0]-sx,dy=target[1]-sy,dist=Math.hypot(dx,dy);
+ const count=Math.ceil(dist/step);
+ const side=(r()-.5)*Math.min(dist*.08,110);
+ for(let k=1;k&lt;=count+3;k++){
+  const t=Math.min(1,k/count);
+  const wobble=Math.sin(t*Math.PI)*side+Math.sin(t*Math.PI*7+seed)*step*.18;
+  x=sx+dx*t-dy/dist*wobble;
+  y=sy+dy*t+dx/dist*wobble;
+  pts.push([x,y]);
+  if(k&gt;3&amp;&amp;stopLake&amp;&amp;state.lakes.some(l=&gt;((x-l.x)/l.rx)**2+((y-l.y)/l.ry)**2&lt;.7))return {pts,intoLake:true};
+  if(!land(x,y))return {pts,intoLake:false};
+ }
+ return {pts,intoLake:false};
+}
+function riverData(){
+ const r=rng(state.hash+717),rivers=[];
+ // Prítoky z horských oblastí, ktoré smerujú až do mora.
+ for(let i=0;i&lt;Math.max(12,Math.round(state.w/750));i++){
+  let x=(.15+r()*.7)*state.w,y=(.15+r()*.7)*state.h;
+  if(terrain(x,y).e&lt;.61||isLake(x,y,15))continue;
+  const route=riverToSea(x,y,state.hash+i*7919,true);
+  if(route&amp;&amp;route.pts.length&gt;9)rivers.push(route.pts);
+ }
+ // Každé jazero má aspoň jeden odtok do mora.
+ state.lakes.forEach((l,i)=&gt;{
+  const route=riverToSea(l.x,l.y,state.hash+100003+i*101,false);
+  if(route&amp;&amp;route.pts.length&gt;4)rivers.push(route.pts);
+ });
+ return rivers;
+}
+function distanceSegment(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,t=clamp(((px-ax)*dx+(py-ay)*dy)/(dx*dx+dy*dy||1),0,1);return Math.hypot(px-(ax+t*dx),py-(ay+t*dy))}
+function nearRiver(x,y,radius){for(const river of state.rivers){for(let j=1;j&lt;river.length;j+=2){if(distanceSegment(x,y,...river[j-1],...river[j])&lt;radius)return true}}return false}
+function lakeData(){const r=rng(state.hash+322),lakes=[];for(let i=0;i&lt;Math.max(10,Math.round(state.w/650));i++){const x=(.12+r()*.76)*state.w,y=(.12+r()*.76)*state.h,t=terrain(x,y);if(t.e&gt;.47&amp;&amp;t.e&lt;.67&amp;&amp;t.moist&gt;.40&amp;&amp;land(x,y)){const rx=45+r()*110,ry=35+r()*85;if(Array.from({length:12},(_,k)=&gt;{const a=k*Math.PI/6;return land(x+Math.cos(a)*rx*1.2,y+Math.sin(a)*ry*1.2)}).every(Boolean))lakes.push({x,y,rx,ry})}}return lakes}
+function isLake(x,y,pad=0){return state.lakes.some(l=&gt;((x-l.x)/(l.rx+pad))**2+((y-l.y)/(l.ry+pad))**2&lt;1)}
+function isWater(x,y){return !land(x,y)||isLake(x,y)||nearRiver(x,y,5)}
+function validCity(x,y,radius){if(x&lt;radius||y&lt;radius||x&gt;state.w-radius||y&gt;state.h-radius)return false;if(isWater(x,y))return false;let dry=0,total=0;for(let ring of [.35,.7,1])for(let i=0;i&lt;16;i++){const a=i*Math.PI/8,px=x+Math.cos(a)*radius*ring,py=y+Math.sin(a)*radius*ring;total++;if(!isWater(px,py))dry++}return dry/total&gt;=.84}
+const namesA=['Nové','Staré','Horné','Dolné','Veľké','Malé','Zelené','Strieborné','Severné','Južné','Biele','Čierne','Tiché','Slnečné','Kamenné','Javorové','Veterné','Zlaté','Modré','Dubové'];const namesB=['Údolie','Hradisko','Jazerá','Polany','Brod','Lúky','Skaly','Mesto','Vrchy','Pramene','Brehy','Doly','Hory','Záhrady','Roviny','Pole','Pobrežie','Lesy','Kopce','Dvor'];
+function makeCities(count){const r=rng(state.hash+1009),cities=[],cell=state.w/Math.sqrt(count)*.78,minDist=Math.max(80,Math.min(state.w,state.h)/Math.sqrt(count)*.48);let tries=0;while(cities.length&lt;count&amp;&amp;tries&lt;count*1100){tries++;const x=70+r()*(state.w-140),y=70+r()*(state.h-140),radius=25+Math.sqrt(count/200)*8;if(!validCity(x,y,radius))continue;if(cities.some(c=&gt;Math.hypot(c.x-x,c.y-y)&lt;minDist))continue;const pop=Math.round((8000+Math.pow(r(),2.0)*650000)/100)*100;const t=terrain(x,y),biome=t.e&gt;.72?'Horské pásmo':t.heat&lt;.3?'Chladné pásmo':t.moist&lt;.32?'Suché pásmo':t.moist&gt;.62?'Lesné pásmo':'Mierne pásmo';cities.push({satisfaction:85, suppliedMW:0, id:'city-'+(cities.length+1),name:namesA[Math.floor(r()*namesA.length)]+' '+namesB[Math.floor(r()*namesB.length)]+' '+(cities.length+1),x,y,pop,biome,baseMW:Math.round(pop*.0014),unlocked:false,switchboard:null,price:Math.round((pop*7+300000)/1000)*1000})}if(cities.length&lt;count)throw new Error('Nepodarilo sa umiestniť všetky mestá. Skús iný seed alebo väčšiu mapu.');return cities}
+function makeTerrainImage(){const w=1200,h=Math.round(1200*state.h/state.w),c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d'),im=g.createImageData(w,h),cache=new Map();for(let y=0;y&lt;h;y++)for(let x=0;x&lt;w;x++){const t=terrain(x/w*state.w,y/h*state.h),hex=color(t),rgb=cache.get(hex)||[parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)];cache.set(hex,rgb);const p=(y*w+x)*4,grain=(hash2(x,y,state.hash+15)-.5)*9;im.data[p]=clamp(rgb[0]+grain,0,255);im.data[p+1]=clamp(rgb[1]+grain,0,255);im.data[p+2]=clamp(rgb[2]+grain,0,255);// Na okrajoch sveta je vždy súvislý oceán, nie priehľadný obdĺžnik.
+// Rozdiel medzi textúrou mora a oceánom za mapou postupne mizne.
+const edgeDist=Math.min(x,y,w-1-x,h-1-y),fade=smooth(clamp(edgeDist/85,0,1));
+const base=[22,59,83];
+const water=t.e&lt;=SEA;
+const blend=water?fade:1;
+im.data[p]=Math.round(base[0]*(1-blend)+im.data[p]*blend);
+im.data[p+1]=Math.round(base[1]*(1-blend)+im.data[p+1]*blend);
+im.data[p+2]=Math.round(base[2]*(1-blend)+im.data[p+2]*blend);
+im.data[p+3]=255;
+}g.putImageData(im,0,0);g.save();g.scale(w/state.w,h/state.h);for(const l of state.lakes){g.fillStyle='#327e9a';g.beginPath();g.ellipse(l.x,l.y,l.rx,l.ry,.3,0,Math.PI*2);g.fill()}for(const river of state.rivers){g.beginPath();river.forEach(([x,y],i)=&gt;i?g.lineTo(x,y):g.moveTo(x,y));g.strokeStyle='#235f83';g.lineWidth=15;g.lineCap='round';g.lineJoin='round';g.stroke();g.strokeStyle='#52a4c0';g.lineWidth=8;g.stroke()}g.restore();terrainCanvas=c;miniTerrain=c}
+function viewport(){const v=$('viewport');return {w:v.clientWidth,h:v.clientHeight}}
+function resize(){const dpr=Math.min(devicePixelRatio||1,2),v=viewport();canvas.width=Math.round(v.w*dpr);canvas.height=Math.round(v.h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);draw()}
+function center(x,y){const v=viewport();pan.x=v.w/2-x*pan.zoom;pan.y=v.h/2-y*pan.zoom}
+function fit(){const v=viewport();pan.zoom=Math.min(v.w/state.w,v.h/state.h)*1.1;center(state.w/2,state.h/2)}
+function screen(x,y){return{x:x*pan.zoom+pan.x,y:y*pan.zoom+pan.y}}
+function world(x,y){return{x:(x-pan.x)/pan.zoom,y:(y-pan.y)/pan.zoom}}
+function draw(){const v=viewport();ctx.clearRect(0,0,v.w,v.h);ctx.fillStyle='#163b53';ctx.fillRect(0,0,v.w,v.h);
+if(!state||!terrainCanvas)return;ctx.save();ctx.translate(pan.x,pan.y);ctx.scale(pan.zoom,pan.zoom);ctx.drawImage(terrainCanvas,0,0,state.w,state.h);const size=clamp(6/pan.zoom,15,70);for(const c of state.cities){if(cityVisibility==='owned'&amp;&amp;!c.unlocked)continue;const p=screen(c.x,c.y);if(p.x&lt; -60||p.x&gt;v.w+60||p.y&lt; -60||p.y&gt;v.h+60)continue;const radius=clamp(6/pan.zoom,18,80);ctx.beginPath();ctx.arc(c.x,c.y,radius,0,Math.PI*2);ctx.fillStyle=cityColor(c);ctx.fill();ctx.lineWidth=clamp(2/pan.zoom,4,18);ctx.strokeStyle=c.unlocked?'#0c292a':'#263b43';ctx.stroke();ctx.fillStyle='#102b30';ctx.font=`bold ${clamp(8/pan.zoom,16,65)}px system-ui`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(c.unlocked?'✓':'⌂',c.x,c.y);if(pan.zoom&gt;.13||c.unlocked||selected===c.id){ctx.font=`600 ${clamp(11/pan.zoom,25,90)}px system-ui`;ctx.lineWidth=clamp(3/pan.zoom,6,18);ctx.strokeStyle='#0b2528';ctx.strokeText(c.name,c.x,c.y-radius-17/pan.zoom);ctx.fillStyle='#f3f6ec';ctx.fillText(c.name,c.x,c.y-radius-17/pan.zoom)}}if(state.plant){const p=state.plant;ctx.fillStyle='#f4c25a';ctx.beginPath();ctx.arc(p.x,p.y,clamp(7/pan.zoom,22,90),0,Math.PI*2);ctx.fill();ctx.font=`bold ${clamp(11/pan.zoom,25,80)}px system-ui`;ctx.textAlign='center';ctx.fillStyle='#1b2927';ctx.fillText('⚡',p.x,p.y+3/pan.zoom)}ctx.restore();drawMini()}
+function drawMini(){if(!state)return;const w=190,h=132;mini.width=w*devicePixelRatio;mini.height=h*devicePixelRatio;mc.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);mc.drawImage(miniTerrain,0,0,w,h);const v=viewport(),a=world(0,0),b=world(v.w,v.h);mc.strokeStyle='#f9f9e9';mc.lineWidth=1.5;mc.strokeRect(a.x/state.w*w,a.y/state.h*h,(b.x-a.x)/state.w*w,(b.y-a.y)/state.h*h)}
+function zoomAt(f,x,y){if(!state)return;const p=world(x,y);pan.zoom=clamp(pan.zoom*f,.035,3.5);pan.x=x-p.x*pan.zoom;pan.y=y-p.y*pan.zoom;draw()}
+function cityColor(c){if(!c.unlocked)return '#e8e7d6';const ratio=demand(c,clock)&gt;0?Math.max(0,(c.suppliedMW||0)/demand(c,clock)):0;return ratio&gt;=.98?'#34d399':ratio&gt;=.65?'#fbbf24':ratio&gt;0?'#fb923c':'#ef4444'}
+function supplyStatus(c){if(!c.unlocked)return 'Zamknuté';const r=(c.suppliedMW||0)/Math.max(1,demand(c,clock));return r&gt;=.98?'Dostatok energie':r&gt;=.65?'Čiastočný odber – znížený príjem':r&gt;0?'Veľký nedostatok energie':'Bez elektriny'}
+function phaseAt(h){return phases.find(p=&gt;h&gt;=p.start&amp;&amp;h&lt;p.end)||phases[0]}
+function demand(c,h){return Math.round(c.baseMW*phaseAt(h).m)}
+function esc(s){return String(s).replace(/[&amp;&lt;&gt;&quot;']/g,ch=&gt;({'&amp;':'&amp;amp;','&lt;':'&amp;lt;','&gt;':'&amp;gt;','&quot;':'&amp;quot;',&quot;'&quot;:'&amp;#39;'}[ch]))}
+function showCity(id){const c=state.cities.find(x=&gt;x.id===id);if(!c)return;selected=id;const p=$('panel');p.hidden=false;const first=!state.startCity,phase=phaseAt(clock);p.innerHTML=`&lt;div style=&quot;display:flex;justify-content:space-between;align-items:center&quot;&gt;&lt;span class=&quot;muted&quot;&gt;MESTO · ${esc(c.biome)}&lt;/span&gt;&lt;button class=&quot;smallbtn&quot; id=&quot;closePanel&quot;&gt;✕&lt;/button&gt;&lt;/div&gt;&lt;h2&gt;${esc(c.name)}&lt;/h2&gt;&lt;div class=&quot;chips&quot;&gt;&lt;span class=&quot;chip&quot;&gt;${c.unlocked?'🟢 Odomknuté':'🔒 Zamknuté'}&lt;/span&gt;&lt;span class=&quot;chip&quot;&gt;${esc(c.id)}&lt;/span&gt;&lt;span class=&quot;chip&quot; style=&quot;color:${cityColor(c)}&quot;&gt;● ${supplyStatus(c)}&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;statrow&quot;&gt;&lt;span&gt;Obyvatelia&lt;/span&gt;&lt;b&gt;${c.pop.toLocaleString('sk-SK')}&lt;/b&gt;&lt;/div&gt;&lt;div class=&quot;statrow&quot;&gt;&lt;span&gt;Aktuálna spotreba&lt;/span&gt;&lt;b&gt;${demand(c,clock)} MW&lt;/b&gt;&lt;/div&gt;&lt;div class=&quot;statrow&quot;&gt;&lt;span&gt;Dodávaná energia&lt;/span&gt;&lt;b&gt;${Math.round(c.suppliedMW||0)} MW&lt;/b&gt;&lt;/div&gt;&lt;div class=&quot;statrow&quot;&gt;&lt;span&gt;Pokrytie dopytu&lt;/span&gt;&lt;b&gt;${Math.round(Math.min(100,(c.suppliedMW||0)/Math.max(1,demand(c,clock))*100))} %&lt;/b&gt;&lt;/div&gt;&lt;div class=&quot;statrow&quot;&gt;&lt;span&gt;Spokojnosť obyvateľov&lt;/span&gt;&lt;b&gt;${Math.round(c.satisfaction)} %&lt;/b&gt;&lt;/div&gt;&lt;div class=&quot;statrow&quot;&gt;&lt;span&gt;Fáza dňa&lt;/span&gt;&lt;b&gt;${phase.name}&lt;/b&gt;&lt;/div&gt;&lt;h3 style=&quot;margin-bottom:8px&quot;&gt;Denný odber elektriny&lt;/h3&gt;${phases.slice(0,5).map(ph=&gt;`&lt;div class=&quot;phase ${ph.name===phase.name?'active':''}&quot;&gt;&lt;span&gt;${ph.name} (${String(ph.start).padStart(2,'0')}:00–${String(ph.end).padStart(2,'0')}:00)&lt;/span&gt;&lt;b&gt;${Math.round(c.baseMW*ph.m)} MW&lt;/b&gt;&lt;/div&gt;`).join('')}&lt;div class=&quot;notice&quot;&gt;${first?'Vyber si prvé mesto zadarmo.':'Cena odomknutia: '+c.price.toLocaleString('sk-SK')+' €'}&lt;/div&gt;${!c.unlocked?`&lt;button class=&quot;primary&quot; id=&quot;buyCity&quot; style=&quot;width:100%&quot;&gt;${first?'Vybrať ako prvé mesto · ZADARMO':'Kúpiť mesto · '+c.price.toLocaleString('sk-SK')+' €'}&lt;/button&gt;`:`&lt;div class=&quot;notice&quot;&gt;Mesto je odomknuté.&lt;/div&gt;`}&lt;h3&gt;Rozvádzač&lt;/h3&gt;&lt;div class=&quot;muted&quot;&gt;${c.switchboard?'Aktívny typ '+c.switchboard.inputs+' vstup(y) / '+c.switchboard.outputs.length+' výstup(y)':'Nenainštalovaný — z mesta zatiaľ nemožno viesť elektrinu ďalej.'}&lt;/div&gt;${c.unlocked?`&lt;label style=&quot;margin-top:13px&quot;&gt;Kúpiť / vymeniť rozvádzač&lt;/label&gt;&lt;select id=&quot;switchType&quot;&gt;&lt;option value=&quot;&quot;&gt;Vyber konfiguráciu&lt;/option&gt;&lt;option value=&quot;1,1&quot;&gt;1 vstup / 1 výstup — 20 000 €&lt;/option&gt;&lt;option value=&quot;1,2&quot;&gt;1 vstup / 2 výstupy — 35 000 €&lt;/option&gt;&lt;option value=&quot;1,3&quot;&gt;1 vstup / 3 výstupy — 50 000 €&lt;/option&gt;&lt;option value=&quot;2,3&quot;&gt;2 vstupy / 3 výstupy — 75 000 €&lt;/option&gt;&lt;/select&gt;&lt;button id=&quot;installSwitch&quot; style=&quot;margin-top:8px;width:100%&quot;&gt;Nainštalovať&lt;/button&gt;${c.switchboard?c.switchboard.outputs.map((o,i)=&gt;`&lt;div class=&quot;statrow&quot;&gt;&lt;span&gt;Výstup ${i+1}&lt;/span&gt;&lt;div style=&quot;width:150px&quot;&gt;&lt;select data-mode=&quot;${i}&quot;&gt;&lt;option value=&quot;percent&quot; ${o.mode==='percent'?'selected':''}&gt;Percentá (%)&lt;/option&gt;&lt;option value=&quot;mw&quot; ${o.mode==='mw'?'selected':''}&gt;Výkon (MW)&lt;/option&gt;&lt;/select&gt;&lt;input style=&quot;margin-top:5px&quot; type=&quot;number&quot; min=&quot;0&quot; max=&quot;${o.mode==='percent'?100:100000}&quot; data-out=&quot;${i}&quot; value=&quot;${o.value}&quot;&gt;&lt;/div&gt;&lt;/div&gt;`).join(''):''}`:''}&lt;div class=&quot;error&quot; id=&quot;panelError&quot;&gt;&lt;/div&gt;`;p.querySelector('#closePanel').onclick=()=&gt;{p.hidden=true;selected=null;draw()};const buy=p.querySelector('#buyCity');if(buy)buy.onclick=()=&gt;{if(!state.startCity){state.startCity=c.id;c.unlocked=true;const rr=rng(state.hash+seedHash(c.id));let px=c.x+110,py=c.y+65;for(let k=0;k&lt;36;k++){let a=k*Math.PI/18;let xx=c.x+Math.cos(a)*130,yy=c.y+Math.sin(a)*130;if(validCity(xx,yy,18)){px=xx;py=yy;break}}state.plant={id:'starter-plant',type:'starter',x:px,y:py,capacityMW:250};$('worldInfo').textContent=`${state.cities.length} miest · 1 odomknuté · 1 elektráreň`;}else if(state.money&gt;=c.price){state.money-=c.price;c.unlocked=true;}else{$('panelError').textContent='Nemáš dosť peňazí.';return}notify('cityUnlocked',{city:c});showCity(c.id);draw()};const install=p.querySelector('#installSwitch');if(install)install.onclick=()=&gt;{const val=p.querySelector('#switchType').value;if(!val)return;const [inputs,outputs]=val.split(',').map(Number),prices={'1,1':20000,'1,2':35000,'1,3':50000,'2,3':75000},price=prices[val];if(state.money&lt;price){$('panelError').textContent='Nemáš dosť peňazí.';return}state.money-=price;c.switchboard={inputs,outputs:Array.from({length:outputs},()=&gt;({mode:'percent',value:100}))};notify('switchboardChanged',{city:c});showCity(c.id)};p.querySelectorAll('[data-mode]').forEach(el=&gt;el.onchange=()=&gt;{const o=c.switchboard.outputs[+el.dataset.mode];o.mode=el.value;o.value=o.mode==='percent'?100:0;notify('switchboardChanged',{city:c});showCity(c.id)});p.querySelectorAll('[data-out]').forEach(el=&gt;el.onchange=()=&gt;{const o=c.switchboard.outputs[+el.dataset.out];o.value=clamp(Number(el.value)||0,0,o.mode==='percent'?100:100000);notify('switchboardChanged',{city:c});showCity(c.id)})}
+function notify(name,detail){window.dispatchEvent(new CustomEvent('powerplant:'+name,{detail}))}
+function generate(){const seed=$('seed').value.trim()||'POWERPLANT-2026',count=Number($('cityCount').value),sizes={normal:[8000,5600],huge:[12000,8400],giant:[16000,11200]};if(!Number.isInteger(count)||count&lt;10||count&gt;500){$('setupError').textContent='Počet miest musí byť od 10 do 500.';return}const [w,h]=sizes[$('size').value];$('setupError').textContent='Generujem terén a kontrolujem umiestnenie miest…';$('generate').disabled=true;setTimeout(()=&gt;{try{state={seed,hash:seedHash(seed),w,h,cities:[],rivers:[],lakes:[],startCity:null,plant:null,money:50000000};state.lakes=lakeData();state.rivers=riverData();state.cities=makeCities(count);makeTerrainImage();$('setup').style.display='none';$('panel').hidden=true;$('miniWrap').hidden=false;selected=null;fit();resize();$('worldInfo').textContent=`${count} miest · vyber prvé mesto`;notify('worldGenerated',{seed,count,width:w,height:h});}catch(e){$('setupError').textContent=e.message}finally{$('generate').disabled=false}},30)}
+canvas.addEventListener('contextmenu',e=&gt;e.preventDefault());canvas.addEventListener('pointerdown',e=&gt;{if(e.button===2||e.button===1){drag={x:e.clientX,y:e.clientY,moved:false};canvas.setPointerCapture(e.pointerId);$('viewport').classList.add('panning')}});canvas.addEventListener('pointermove',e=&gt;{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)&gt;0)drag.moved=true;pan.x+=dx;pan.y+=dy;drag.x=e.clientX;drag.y=e.clientY;draw()});canvas.addEventListener('pointerup',()=&gt;{drag=null;$('viewport').classList.remove('panning')});canvas.addEventListener('pointercancel',()=&gt;{drag=null;$('viewport').classList.remove('panning')});canvas.addEventListener('wheel',e=&gt;{e.preventDefault();const r=canvas.getBoundingClientRect();zoomAt(e.deltaY&lt;0?1.15:1/1.15,e.clientX-r.left,e.clientY-r.top)},{passive:false});canvas.addEventListener('click',e=&gt;{if(!state)return;const r=canvas.getBoundingClientRect(),p=world(e.clientX-r.left,e.clientY-r.top);let nearest=null,d=Infinity;for(const c of state.cities){if(cityVisibility==='owned'&amp;&amp;!c.unlocked)continue;const a=Math.hypot(c.x-p.x,c.y-p.y);if(a&lt;d){nearest=c;d=a}}if(nearest&amp;&amp;d&lt;Math.max(65,14/pan.zoom))showCity(nearest.id);else{$('panel').hidden=true;selected=null}draw()});mini.addEventListener('click',e=&gt;{if(!state)return;const r=mini.getBoundingClientRect();center((e.clientX-r.left)/r.width*state.w,(e.clientY-r.top)/r.height*state.h);draw()});$('zoomIn').onclick=()=&gt;{const v=viewport();zoomAt(1.4,v.w/2,v.h/2)};$('zoomOut').onclick=()=&gt;{const v=viewport();zoomAt(1/1.4,v.w/2,v.h/2)};$('newWorld').onclick=()=&gt;{$('setup').style.display='flex'};$('generate').onclick=generate;$('cityVisibility').onchange=e=&gt;{cityVisibility=e.target.value;if(selected){const c=state?.cities.find(x=&gt;x.id===selected);if(c&amp;&amp;cityVisibility==='owned'&amp;&amp;!c.unlocked){$('panel').hidden=true;selected=null}}draw()};window.addEventListener('keydown',e=&gt;{if(e.key==='Escape'){$('panel').hidden=true;selected=null;draw()}});window.addEventListener('resize',resize);
+function frame(t){const dt=Math.min((t-lastFrame)/1000,1);lastFrame=t;if(state&amp;&amp;playing&amp;&amp;!window.parent.PowerplantBridge){const old=phaseAt(clock).name;clock=(clock+dt*.18)%24;if(phaseAt(clock).name!==old&amp;&amp;selected)showCity(selected)}requestAnimationFrame(frame)}requestAnimationFrame(frame);
+// Verejné API pre napojenie kamarátovej simulácie.
+window.PowerplantMap={redraw:()=&gt;draw(),getState:()=&gt;state,getCities:()=&gt;state?.cities||[],getCity:id=&gt;state?.cities.find(c=&gt;c.id===id),getDemand:(id,h=clock)=&gt;{const c=state?.cities.find(c=&gt;c.id===id);return c?demand(c,h):null},getPhase:(h=clock)=&gt;phaseAt(h).name,getTime:()=&gt;clock,setTime:h=&gt;{clock=((Number(h)%24)+24)%24;if(selected)showCity(selected)},getSeed:()=&gt;state?.seed,getVisibleCities:()=&gt;state?.cities.filter(c=&gt;cityVisibility==='all'||c.unlocked)||[],setCityVisibility:mode=&gt;{cityVisibility=mode==='owned'?'owned':'all';$('cityVisibility').value=cityVisibility;draw()},setCitySupply:(id,mw)=&gt;{const c=state?.cities.find(c=&gt;c.id===id);if(!c)return false;c.suppliedMW=Math.max(0,Number(mw)||0);if(selected===id)showCity(id);return true},setCitySatisfaction:(id,value)=&gt;{const c=state?.cities.find(c=&gt;c.id===id);if(!c)return false;c.satisfaction=clamp(Number(value)||0,0,100);if(selected===id)showCity(id);return true},unlockCity:id=&gt;{const c=state?.cities.find(c=&gt;c.id===id);if(!c)return false;c.unlocked=true;notify('cityUnlocked',{city:c});if(selected===id)showCity(id);draw();return true},setMoney:n=&gt;{if(state)state.money=Number(n)},getMoney:()=&gt;state?.money,centerOnCity:id=&gt;{const c=state?.cities.find(c=&gt;c.id===id);if(c){center(c.x,c.y);draw()}},getTerrain:(x,y)=&gt;state?terrain(x,y):null,regenerate:(seed,count,size='huge')=&gt;{$('seed').value=seed;$('cityCount').value=count;$('size').value=size;generate()}};
+
+// Build mode extension - isolated from energy simulation, ready for topology integration.
+const construction={tool:null,items:[],links:[],cableFrom:null};
+const buildCatalog={
+ nu:{label:'Jadrová elektráreň',cost:1800000,icon:'☢'},so:{label:'Solárna elektráreň',cost:180000,icon:'☀'},hy:{label:'Vodná elektráreň',cost:420000,icon:'💧'},wi:{label:'Veterná elektráreň',cost:240000,icon:'🌬'},cl:{label:'Uhoľná elektráreň',cost:650000,icon:'🏭'},ga:{label:'Plynová elektráreň',cost:440000,icon:'🔥'},oi:{label:'Ropná elektráreň',cost:320000,icon:'🛢'},
+ battery:{label:'Batériové úložisko',cost:140000,icon:'🔋'},pumped:{label:'Prečerpávacie úložisko',cost:550000,icon:'💦'},
+ switch11:{label:'Rozvádzač 1/1',cost:20000,icon:'⬡',inputs:1,outputs:1},switch12:{label:'Rozvádzač 1/2',cost:35000,icon:'⬡',inputs:1,outputs:2},switch13:{label:'Rozvádzač 1/3',cost:50000,icon:'⬡',inputs:1,outputs:3},switch23:{label:'Rozvádzač 2/3',cost:75000,icon:'⬡',inputs:2,outputs:3},
+ cable:{label:'Elektrické vedenie',cost:12000,icon:'〰'}
+};
+function buildDraw(){if(!state)return;ctx.save();for(const link of construction.links){const a=buildEndpoint(link.a),b=buildEndpoint(link.b);if(!a||!b)continue;const A=screen(a.x,a.y),B=screen(b.x,b.y);ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.strokeStyle='#f8d16e';ctx.lineWidth=3;ctx.setLineDash([9,5]);ctx.stroke();ctx.setLineDash([])}for(const item of construction.items){const pt=screen(item.x,item.y);if(pt.x&lt;-40||pt.y&lt;-40||pt.x&gt;viewport().w+40||pt.y&gt;viewport().h+40)continue;ctx.beginPath();ctx.arc(pt.x,pt.y,13,0,Math.PI*2);ctx.fillStyle='#122a35';ctx.fill();ctx.strokeStyle='#69d9b8';ctx.lineWidth=2;ctx.stroke();ctx.font='17px system-ui';ctx.textAlign='center';ctx.fillStyle='white';ctx.fillText(buildCatalog[item.type]?.icon||'⚡',pt.x,pt.y+6)}ctx.restore()}
+const nativeDraw=draw;draw=function(){nativeDraw();buildDraw()};
+function buildEndpoint(id){const c=state?.cities.find(c=&gt;c.id===id);if(c)return c;return construction.items.find(x=&gt;x.id===id)}
+function buildNearest(pt){let best=null,dist=Infinity;for(const c of state.cities.filter(c=&gt;c.unlocked)){const d=Math.hypot(pt.x-c.x,pt.y-c.y);if(d&lt;dist){dist=d;best=c}}for(const item of construction.items){const d=Math.hypot(pt.x-item.x,pt.y-item.y);if(d&lt;dist){dist=d;best=item}}return dist&lt;Math.max(85,17/pan.zoom)?best:null}
+function buildClick(e){if(!construction.tool||!state?.startCity)return;const r=canvas.getBoundingClientRect(),pt=world(e.clientX-r.left,e.clientY-r.top),type=construction.tool,info=buildCatalog[type];if(!info)return;e.stopImmediatePropagation();e.preventDefault();
+ if(type==='cable'){const node=buildNearest(pt);if(!node){notify('buildNotice',{message:'Klikni na vlastné mesto alebo postavený objekt.'});return}if(!construction.cableFrom){construction.cableFrom=node.id;notify('buildNotice',{message:'Vyber druhý koniec vedenia.'});return}if(construction.cableFrom===node.id){construction.cableFrom=null;return}const from=buildEndpoint(construction.cableFrom);const length=Math.hypot(from.x-node.x,from.y-node.y);const price=Math.round(12000+length*35);if(state.money&lt;price){notify('buildNotice',{message:'Nemáš dosť peňazí na vedenie.'});return}state.money-=price;construction.links.push({a:from.id,b:node.id,cost:price});construction.cableFrom=null;notify('constructionChanged',{money:state.money,links:construction.links,items:construction.items});notify('buildNotice',{message:'Vedenie postavené za '+price.toLocaleString('sk-SK')+' €.'});draw();return}
+ if(!land(pt.x,pt.y)||isLake(pt.x,pt.y,18)||nearRiver(pt.x,pt.y,13)){notify('buildNotice',{message:'Tu sa nedá stavať: vyber suchú pevninu.'});return}
+ if(state.cities.some(c=&gt;Math.hypot(c.x-pt.x,c.y-pt.y)&lt;45)||construction.items.some(c=&gt;Math.hypot(c.x-pt.x,c.y-pt.y)&lt;42)){notify('buildNotice',{message:'Príliš blízko mesta alebo inej stavby.'});return}
+ if(state.money&lt;info.cost){notify('buildNotice',{message:'Nemáš dosť peňazí.'});return}
+ state.money-=info.cost;construction.items.push({id:'built-'+(construction.items.length+1),type,x:pt.x,y:pt.y,inputs:info.inputs||0,outputs:info.outputs||0});notify('constructionChanged',{money:state.money,items:construction.items,links:construction.links});notify('buildNotice',{message:info.label+' postavený za '+info.cost.toLocaleString('sk-SK')+' €.'});draw();}
+canvas.addEventListener('click',e=&gt;{if(construction.tool||!state)return;const r=canvas.getBoundingClientRect(),pt=world(e.clientX-r.left,e.clientY-r.top);const hit=construction.items.filter(i=&gt;['nu','cl','ga','oi','so','hy','wi'].includes(i.type)).find(i=&gt;Math.hypot(i.x-pt.x,i.y-pt.y)&lt;Math.max(80,20/pan.zoom));if(hit){e.stopImmediatePropagation();notify('plantSelected',{type:hit.type,id:hit.id});}},true);
+canvas.addEventListener('click',buildClick,true);
+window.PowerplantConstruction={catalog:buildCatalog,setTool:type=&gt;{construction.tool=type in buildCatalog?type:null;construction.cableFrom=null;canvas.style.cursor=construction.tool?'crosshair':'default';},getTool:()=&gt;construction.tool,getItems:()=&gt;construction.items,getLinks:()=&gt;construction.links,reset:()=&gt;{construction.items=[];construction.links=[];construction.cableFrom=null;construction.tool=null}};
+window.addEventListener('powerplant:worldGenerated',()=&gt;window.PowerplantConstruction.reset());
+})();&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;
+" title="Mapa sveta"></iframe>
+<iframe class="frame" id="sim" sandbox="allow-scripts allow-same-origin" srcdoc="&lt;!DOCTYPE html&gt;
+
+&lt;html lang=&quot;sk&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;/&gt;
+&lt;meta content=&quot;width=device-width, initial-scale=1, viewport-fit=cover&quot; name=&quot;viewport&quot;/&gt;
+&lt;title&gt;Powerplant&lt;/title&gt;
+&lt;style&gt;
+:root{--bg:#f6f6f3;--card:#fff;--tx:#1d1d1b;--mu:#6b6b66;--bd:#dcdcd5;--nu:#7b4fd1;--so:#e0a000;--ps:#1f7ae0;--ok:#2e9b57;--bad:#d33a3a;--dem:#888;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=&quot;light&quot;]){--bg:#17171a;--card:#222226;--tx:#ececec;--mu:#9a9aa2;--bd:#38383f;--nu:#a98bf0;--so:#f0c030;--ps:#5aa2f5;--ok:#4cc27a;--bad:#f06060;--dem:#aaa}}
+:root[data-theme=&quot;dark&quot;]{--bg:#17171a;--card:#222226;--tx:#ececec;--mu:#9a9aa2;--bd:#38383f;--nu:#a98bf0;--so:#f0c030;--ps:#5aa2f5;--ok:#4cc27a;--bad:#f06060;--dem:#aaa}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,&quot;Segoe UI&quot;,sans-serif}
+main{max-width:1280px;margin:0 auto;padding:14px;display:grid;gap:10px;grid-template-columns:320px minmax(0,1fr) 340px;grid-template-areas:&quot;top top top&quot; &quot;controls grid sc&quot; &quot;controls chart sc&quot; &quot;end end end&quot;}
+main .card{margin:0}.top{grid-area:top;margin:0}
+#st .grid,#scc .grid{grid-template-columns:1fr 1fr}
+#gs line{stroke:var(--bd);stroke-width:1;stroke-dasharray:7 7;animation:fl 1s linear infinite}#gs line.rev{animation-direction:reverse}
+@keyframes fl{to{stroke-dashoffset:-14}}
+#gs text{fill:var(--tx);font-family:inherit}
+@media (max-width:900px){main{grid-template-columns:1fr;grid-template-areas:&quot;top&quot; &quot;sc&quot; &quot;grid&quot; &quot;chart&quot; &quot;controls&quot; &quot;end&quot;}}
+h1{font-size:20px;margin:0 0 4px}
+.top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px;margin-top:8px}
+.pc{border:1px solid var(--bd);border-radius:10px;padding:10px;margin-top:8px}.pg .pc{margin-top:0}
+.k{color:var(--mu);font-size:12px}.v{font-size:22px;font-weight:600}
+.row{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--mu)}
+input[type=range]{width:100%}
+button{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:6px 12px;cursor:pointer;font:inherit}
+button.on{border-color:var(--ps);color:var(--ps)}
+.bar{height:12px;background:var(--bd);border-radius:6px;overflow:hidden}.bar&gt;div{height:100%;width:0;background:var(--ok)}
+canvas{width:100%;height:220px;display:block}
+#msg{font-weight:600;min-height:22px}
+.leg span{margin-right:12px;font-size:12px}.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
+#end{display:none;text-align:center}
+#hh{transform-box:view-box;transform-origin:50px 50px}
+#controls{grid-area:controls}#controls .control-groups{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:10px}#controls .control-groups&gt;.card{margin:0;min-width:0}
+#satinfo{position:relative;cursor:help;border-bottom:1px dotted var(--mu)}#satinfo:focus{outline:2px solid var(--ps);outline-offset:3px}#satTip{display:none;position:absolute;z-index:20;bottom:calc(100% + 9px);left:0;width:min(310px,75vw);padding:10px 12px;border:1px solid var(--bd);border-radius:9px;background:var(--card);color:var(--tx);box-shadow:0 8px 25px #0003;font-size:12px;line-height:1.5;white-space:normal}#satinfo:hover #satTip,#satinfo:focus #satTip,#satinfo:focus-within #satTip{display:block}
+#controls .pg{grid-template-columns:minmax(0,1fr)}
+#scc .status-content{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#scc .stats-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+@media(max-width:1100px) and (min-width:901px){main{grid-template-columns:275px minmax(0,1fr) 290px}}
+@media(max-width:700px){#controls .control-groups{grid-template-columns:1fr}}
+&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;main&gt;
+&lt;div class=&quot;top&quot;&gt;&lt;div&gt;&lt;h1&gt;⚡ Powerplant&lt;/h1&gt;&lt;div class=&quot;k&quot;&gt;Vyrovnaj výrobu so spotrebou a udrž sieť stabilnú.&lt;/div&gt;&lt;/div&gt;
+&lt;div&gt;&lt;button id=&quot;p&quot;&gt;Pauza&lt;/button&gt; &lt;button class=&quot;on&quot; data-s=&quot;1&quot;&gt;×1&lt;/button&gt; &lt;button data-s=&quot;2&quot;&gt;×2&lt;/button&gt; &lt;button data-s=&quot;4&quot;&gt;×4&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div class=&quot;card&quot; style=&quot;grid-area:grid&quot;&gt;&lt;b&gt;🔌 Pôvodný model vedení A/B&lt;/b&gt;&lt;p class=&quot;k&quot;&gt;Toto je zatiaľ pôvodná zjednodušená simulácia. Mestá na svetovej mape sa zásobujú provizórne podľa dostupnej energie; skutočné geografické vedenia ešte nie sú napojené.&lt;/p&gt;
+&lt;svg id=&quot;gs&quot; style=&quot;width:100%;height:auto;display:block&quot; viewbox=&quot;0 0 400 340&quot;&gt;
+&lt;g id=&quot;src&quot;&gt;&lt;/g&gt;
+&lt;line id=&quot;lB&quot; x1=&quot;224&quot; x2=&quot;298&quot; y1=&quot;170&quot; y2=&quot;170&quot;&gt;&lt;/line&gt;
+&lt;circle cx=&quot;190&quot; cy=&quot;170&quot; fill=&quot;var(--card)&quot; id=&quot;nA&quot; r=&quot;34&quot; stroke=&quot;var(--ok)&quot; stroke-width=&quot;5&quot;&gt;&lt;/circle&gt;
+&lt;circle cx=&quot;335&quot; cy=&quot;170&quot; fill=&quot;var(--card)&quot; id=&quot;nB&quot; r=&quot;34&quot; stroke=&quot;var(--ok)&quot; stroke-width=&quot;5&quot;&gt;&lt;/circle&gt;
+&lt;g font-size=&quot;12&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;&lt;text x=&quot;190&quot; y=&quot;174&quot;&gt;Mesto A&lt;/text&gt;&lt;text x=&quot;335&quot; y=&quot;174&quot;&gt;Mesto B&lt;/text&gt;&lt;/g&gt;
+&lt;g font-size=&quot;11&quot; text-anchor=&quot;middle&quot;&gt;&lt;text id=&quot;tA&quot; x=&quot;190&quot; y=&quot;224&quot;&gt;&lt;/text&gt;&lt;text id=&quot;tB&quot; x=&quot;335&quot; y=&quot;224&quot;&gt;&lt;/text&gt;&lt;text id=&quot;tL&quot; x=&quot;262&quot; y=&quot;156&quot;&gt;&lt;/text&gt;&lt;text id=&quot;tF&quot; x=&quot;190&quot; y=&quot;240&quot;&gt;&lt;/text&gt;&lt;/g&gt;
+&lt;/svg&gt;
+&lt;div class=&quot;row&quot;&gt;&lt;span&gt;Prívod z elektrární → A: &lt;b id=&quot;lfA&quot;&gt;100&lt;/b&gt; %&lt;/span&gt;&lt;/div&gt;&lt;input id=&quot;lf&quot; max=&quot;100&quot; min=&quot;0&quot; oninput=&quot;lfA.textContent=this.value&quot; step=&quot;1&quot; type=&quot;range&quot; value=&quot;100&quot;/&gt;
+&lt;div class=&quot;row&quot;&gt;&lt;span&gt;◀ menej prepustí&lt;/span&gt;&lt;span&gt;viac prepustí ▶&lt;/span&gt;&lt;/div&gt;
+&lt;div class=&quot;row&quot;&gt;&lt;span&gt;Vedenie A → B: &lt;b id=&quot;lbA&quot;&gt;85&lt;/b&gt; %&lt;/span&gt;&lt;/div&gt;&lt;input id=&quot;lb&quot; max=&quot;100&quot; min=&quot;0&quot; oninput=&quot;lbA.textContent=this.value&quot; step=&quot;1&quot; type=&quot;range&quot; value=&quot;85&quot;/&gt;
+&lt;div class=&quot;row&quot;&gt;&lt;span&gt;◀ menej prepustí&lt;/span&gt;&lt;span&gt;viac prepustí ▶&lt;/span&gt;&lt;/div&gt;
+&lt;div class=&quot;k&quot;&gt;Koľko % kapacity vedenie pustí ďalej. A→B aj prívod sa zahrievajú nad cca 70 %. Škrtenie chráni vedenie, ale mesto dostane menej.&lt;/div&gt;&lt;/div&gt;
+&lt;div class=&quot;card&quot; style=&quot;grid-area:chart&quot;&gt;&lt;canvas height=&quot;220&quot; id=&quot;cv&quot; width=&quot;900&quot;&gt;&lt;/canvas&gt;
+&lt;div class=&quot;leg&quot;&gt;&lt;span&gt;&lt;i style=&quot;background:var(--dem)&quot;&gt;&lt;/i&gt;Spotreba&lt;/span&gt;&lt;span&gt;&lt;i style=&quot;background:var(--ps)&quot;&gt;&lt;/i&gt;Dodávka&lt;/span&gt;&lt;span&gt;&lt;i style=&quot;background:var(--so)&quot;&gt;&lt;/i&gt;Solár (dostupný)&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div class=&quot;card&quot; id=&quot;scc&quot; style=&quot;grid-area:sc&quot;&gt;&lt;div class=&quot;status-content&quot;&gt;
+&lt;div style=&quot;grid-column:1/-1;display:flex;align-items:center;gap:14px&quot;&gt;
+&lt;svg id=&quot;ck&quot; style=&quot;width:86px;height:86px;flex:none&quot; viewbox=&quot;0 0 100 100&quot;&gt;&lt;defs&gt;&lt;clippath id=&quot;clockClip&quot;&gt;&lt;circle cx=&quot;50&quot; cy=&quot;50&quot; r=&quot;44&quot;&gt;&lt;/circle&gt;&lt;/clippath&gt;&lt;/defs&gt;&lt;g clip-path=&quot;url(#clockClip)&quot;&gt;&lt;circle cx=&quot;50&quot; cy=&quot;50&quot; fill=&quot;#1b2240&quot; r=&quot;44&quot;&gt;&lt;/circle&gt;&lt;path fill=&quot;#bfe3ff&quot; id=&quot;daySlice&quot;&gt;&lt;/path&gt;&lt;/g&gt;&lt;circle cx=&quot;50&quot; cy=&quot;50&quot; fill=&quot;none&quot; r=&quot;46&quot; stroke=&quot;#1b2240&quot; stroke-width=&quot;4&quot;&gt;&lt;/circle&gt;&lt;path fill=&quot;none&quot; id=&quot;dayRim&quot; stroke=&quot;#79bde7&quot; stroke-width=&quot;4&quot;&gt;&lt;/path&gt;&lt;g id=&quot;ckt&quot; stroke=&quot;#8a8a85&quot; stroke-linecap=&quot;round&quot; stroke-width=&quot;2&quot;&gt;&lt;/g&gt;
+&lt;line id=&quot;hh&quot; stroke=&quot;#d33a3a&quot; stroke-linecap=&quot;round&quot; stroke-width=&quot;4.5&quot; x1=&quot;50&quot; x2=&quot;50&quot; y1=&quot;50&quot; y2=&quot;24&quot;&gt;&lt;/line&gt;&lt;circle cx=&quot;50&quot; cy=&quot;50&quot; fill=&quot;#d33a3a&quot; r=&quot;3.5&quot;&gt;&lt;/circle&gt;&lt;/svg&gt;
+&lt;div&gt;&lt;div class=&quot;k&quot;&gt;Herný čas&lt;/div&gt;&lt;div class=&quot;v&quot; id=&quot;cd&quot; style=&quot;font-size:26px;line-height:1.15&quot;&gt;6. novembra&lt;/div&gt;&lt;div id=&quot;cy&quot; style=&quot;font-size:20px;color:var(--mu)&quot;&gt;2026&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div&gt;&lt;div class=&quot;k&quot;&gt;Spotreba (vr. Nemecka)&lt;/div&gt;&lt;div class=&quot;v&quot; id=&quot;dem&quot;&gt;0 MW&lt;/div&gt;&lt;/div&gt;
+&lt;div&gt;&lt;div class=&quot;k&quot;&gt;Dodávka do siete&lt;/div&gt;&lt;div class=&quot;v&quot; id=&quot;net&quot;&gt;0 MW&lt;/div&gt;&lt;/div&gt;
+&lt;div&gt;&lt;div class=&quot;k&quot;&gt;Frekvence&lt;/div&gt;&lt;div class=&quot;v&quot; id=&quot;freq&quot;&gt;50,00 Hz&lt;/div&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;row&quot; style=&quot;margin-top:10px&quot;&gt;&lt;span&gt;Preťaženie siete&lt;/span&gt;&lt;span id=&quot;stl&quot;&gt;0 %&lt;/span&gt;&lt;/div&gt;
+&lt;div class=&quot;bar&quot;&gt;&lt;div id=&quot;stb&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div id=&quot;msg&quot; style=&quot;margin-top:8px&quot;&gt;&lt;/div&gt;&lt;div class=&quot;stats-grid&quot;&gt;
+&lt;div&gt;&lt;div class=&quot;k&quot;&gt;🏦 Bankový účet&lt;/div&gt;&lt;div class=&quot;v&quot; id=&quot;mo&quot;&gt;0 €&lt;/div&gt;&lt;div class=&quot;k&quot; id=&quot;pr&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div&gt;&lt;div class=&quot;k&quot;&gt;🌍 Emisie CO₂&lt;/div&gt;&lt;div class=&quot;v&quot; id=&quot;em&quot;&gt;0 t&lt;/div&gt;&lt;div class=&quot;k&quot; id=&quot;emi&quot;&gt;zo záložných zdrojov&lt;/div&gt;&lt;/div&gt;
+&lt;div&gt;&lt;div class=&quot;k&quot;&gt;Dodané&lt;/div&gt;&lt;div class=&quot;v&quot; id=&quot;sc&quot;&gt;0 GWh&lt;/div&gt;&lt;/div&gt;
+&lt;div&gt;&lt;div class=&quot;k&quot;&gt;Strata bilancie&lt;/div&gt;&lt;div class=&quot;v&quot; id=&quot;ls&quot;&gt;0 GWh&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div class=&quot;row&quot; style=&quot;margin-top:10px&quot;&gt;&lt;span aria-describedby=&quot;satTip&quot; id=&quot;satinfo&quot; tabindex=&quot;0&quot;&gt;😊 Spokojnosť ľudí ⓘ&lt;span id=&quot;satTip&quot; role=&quot;tooltip&quot;&gt;&lt;/span&gt;&lt;/span&gt;&lt;span id=&quot;sat&quot;&gt;100 %&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;bar&quot;&gt;&lt;div id=&quot;satb&quot; style=&quot;width:100%&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div class=&quot;k&quot; style=&quot;margin-top:6px&quot;&gt;Hra beží, kým nezbankrotuješ: bankrot = účet mesiac v mínuse, alebo dlh vyšší než zárobok za 3 mesiace. Nízka spokojnosť znižuje príjmy. Znečistenie sa hromadí pomaly (dni) a časom znižuje spokojnosť.&lt;/div&gt;&lt;/div&gt;
+&lt;section id=&quot;controls&quot;&gt;&lt;b&gt;⚙️ Správa energetiky&lt;/b&gt;&lt;div class=&quot;control-groups&quot;&gt;&lt;div class=&quot;card&quot; id=&quot;pl&quot;&gt;&lt;b&gt;🏭 Elektrárne&lt;/b&gt;
+&lt;div class=&quot;k&quot;&gt;Každá elektráreň stojí fixný denný náklad, aj keď nebeží. Uhoľné, plynové a ropné elektrárne navyše platia za palivo a emisné povolenky a dlhodobo zhoršujú ovzdušie, čím klesá spokojnosť ľudí.&lt;/div&gt;
+&lt;div class=&quot;pg&quot; id=&quot;pg&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div class=&quot;card&quot; id=&quot;dvc&quot;&gt;&lt;b&gt;🔋 Elektrické zariadenia&lt;/b&gt;
+&lt;div class=&quot;pc&quot;&gt;&lt;b style=&quot;color:var(--ok)&quot;&gt;🔋 Batéria&lt;/b&gt;
+&lt;div class=&quot;row&quot;&gt;&lt;span id=&quot;psA&quot;&gt;0 MW&lt;/span&gt;&lt;span&gt;nabitie: &lt;b id=&quot;psL&quot;&gt;0&lt;/b&gt; %&lt;/span&gt;&lt;/div&gt;
+&lt;input id=&quot;ps&quot; max=&quot;400&quot; min=&quot;-400&quot; step=&quot;10&quot; type=&quot;range&quot; value=&quot;0&quot;/&gt;
+&lt;div class=&quot;row&quot;&gt;&lt;span&gt;◀ nabíja (−400 MW, odoberá zo siete)&lt;/span&gt;&lt;span&gt;vybíja (+400 MW, dodáva do siete) ▶&lt;/span&gt;&lt;/div&gt;
+&lt;div class=&quot;bar&quot;&gt;&lt;div id=&quot;psb&quot; style=&quot;background:var(--ok)&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div class=&quot;row&quot; style=&quot;margin-top:6px&quot;&gt;&lt;span&gt;Denný náklad: &lt;b id=&quot;psC&quot;&gt;0&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;
+&lt;div class=&quot;k&quot;&gt;5 GWh, účinnosť nabíjania 80 %. Nabíjanie spotrebuje elektrinu z výroby, vybíjaním ju vrátiš do siete.&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;/div&gt;&lt;/section&gt;
+&lt;div class=&quot;card&quot; id=&quot;end&quot; style=&quot;grid-area:end&quot;&gt;&lt;div class=&quot;v&quot; id=&quot;et&quot;&gt;&lt;/div&gt;&lt;div class=&quot;k&quot; id=&quot;es&quot;&gt;&lt;/div&gt;&lt;br/&gt;&lt;button onclick=&quot;init()&quot;&gt;Hrať znova&lt;/button&gt;&lt;/div&gt;
+&lt;/main&gt;
+&lt;script&gt;
+const DT=1,TOL=200,$=id=&gt;document.getElementById(id);
+let S,timer,speed=1,paused=false;
+// elektrárne: cap MW, fix = fixný denný náklad (€/deň), vr = prevádzkový náklad/palivo (€/MWh), em = emisie (t CO₂/MWh, približne životný cyklus IPCC)
+const PL=[
+{k:&#x27;nu&#x27;,n:&#x27;Jadrová elektráreň&#x27;,i:&#x27;☢&#x27;,c:&#x27;var(--nu)&#x27;,cap:1000,fix:408000,vr:8,em:.012,min:50,def:60,note:&#x27;Max. 1000 MW. Min. stabilný výkon 50 %, zmena max. 1 %/min (600 MW/h) podľa požiadaviek EUR. Veľmi vysoký fixný náklad, lacné palivo, ~12 g CO₂/kWh.&#x27;},
+{k:&#x27;so&#x27;,n:&#x27;Solárna elektráreň&#x27;,i:&#x27;☀&#x27;,c:&#x27;var(--so)&#x27;,cap:800,fix:30000,vr:0,em:.048,def:100,note:&#x27;Posuvník doprava = vyšší výkon (podiel z dostupného slnka, max. 800 MW). Takmer bez prevádzkových nákladov, ~48 g CO₂/kWh.&#x27;},
+{k:&#x27;hy&#x27;,n:&#x27;Vodná elektráreň&#x27;,i:&#x27;💧&#x27;,c:&#x27;var(--ps)&#x27;,cap:350,fix:35000,vr:2,em:.024,note:&#x27;Max. 350 MW, rýchla regulácia. Dostupnosť závisí od ročného obdobia (najviac vody na jar, najmenej v lete a na jeseň). ~24 g CO₂/kWh.&#x27;},
+{k:&#x27;wi&#x27;,n:&#x27;Veterná elektráreň&#x27;,i:&#x27;💨&#x27;,c:&#x27;#12a5a5&#x27;,cap:600,fix:40000,vr:3,em:.011,note:&#x27;Max. 600 MW podľa sily vetra (v zime fúka viac, v lete menej). Posuvník = škrtenie výkonu. ~11 g CO₂/kWh.&#x27;},
+{k:&#x27;cl&#x27;,n:&#x27;Uhoľná elektráreň&#x27;,i:&#x27;🪨&#x27;,c:&#x27;var(--dem)&#x27;,cap:600,fix:70000,vr:95,em:.82,min:40,note:&#x27;Max. 600 MW. Pri chode min. 40 %, zmena 300 MW/h, rozbeh z vypnutého stavu 6 h. Palivo + povolenky ~95 €/MWh, ~820 g CO₂/kWh. Posuvník úplne vľavo = vypnutá.&#x27;},
+{k:&#x27;ga&#x27;,n:&#x27;Plynová elektráreň&#x27;,i:&#x27;🔥&#x27;,c:&#x27;#e8741e&#x27;,cap:500,fix:25000,vr:85,em:.49,min:30,note:&#x27;Max. 500 MW. Pri chode min. 30 %, zmena 400 MW/h, rozbeh 1 h. Palivo + povolenky ~85 €/MWh, ~490 g CO₂/kWh. Posuvník úplne vľavo = vypnutá.&#x27;},
+{k:&#x27;oi&#x27;,n:&#x27;Ropná elektráreň&#x27;,i:&#x27;🛢&#x27;,c:&#x27;#9c6b3c&#x27;,cap:300,fix:15000,vr:150,em:.72,min:30,note:&#x27;Max. 300 MW. Pri chode min. 30 %, zmena 300 MW/h, rozbeh 1 h. Najdrahšie palivo ~150 €/MWh, ~720 g CO₂/kWh. Núdzový zdroj. Posuvník úplne vľavo = vypnutá.&#x27;}];
+
+// Orientačné modelové nákupné ceny palív (nie živé trhové kotácie).
+// Jednotky: jadro kg obohateného uránového paliva, uhlie t, plyn MWh tepelné, ropa barel.
+const FUEL={
+ nu:{name:&#x27;Jadrové palivo&#x27;,unit:&#x27;kg&#x27;,price:2100,perMWh:0.0025,capacity:180,initial:45,batch:15,other:6},
+ cl:{name:&#x27;Energetické uhlie&#x27;,unit:&#x27;t&#x27;,price:115,perMWh:0.43,capacity:12000,initial:2500,batch:1000,other:45},
+ ga:{name:&#x27;Zemný plyn&#x27;,unit:&#x27;MWhₜ&#x27;,price:43,perMWh:1.95,capacity:18000,initial:3500,batch:1500,other:12},
+ oi:{name:&#x27;Vykurovací olej&#x27;,unit:&#x27;barel&#x27;,price:76,perMWh:0.42,capacity:9000,initial:1200,batch:700,other:90}
+};
+function fuelCapacity(k){return S?.fuelCapacity?.[k] ?? FUEL[k]?.capacity ?? 0;}
+function fuelUpgradeInfo(k){const f=FUEL[k];if(!f||!S)return null;const level=S.fuelUpgrades?.[k]||0;const increase=Math.round(f.capacity*0.5);const price=Math.round(f.capacity*f.price*0.12*Math.pow(1.65,level));return {level,capacity:fuelCapacity(k),increase,price};}
+function upgradeFuelStorage(k){const info=fuelUpgradeInfo(k);if(!info||S.over)return {ok:false,message:&#x27;Upgrade nie je dostupný.&#x27;};if(S.money&lt;info.price)return {ok:false,message:&#x27;Nedostatok peňazí na rozšírenie skladu (&#x27;+info.price.toLocaleString(&#x27;sk-SK&#x27;)+&#x27; €).&#x27;};S.money-=info.price;S.fuelCapacity[k]=info.capacity+info.increase;S.fuelUpgrades[k]=info.level+1;return {ok:true,message:&#x27;Sklad rozšírený na &#x27;+S.fuelCapacity[k].toLocaleString(&#x27;sk-SK&#x27;)+&#x27; &#x27;+FUEL[k].unit+&#x27;.&#x27;};}
+function fuelBuy(k,amount){const f=FUEL[k];if(!f||!S||S.over)return {ok:false,message:&#x27;Nedostupné&#x27;};
+ const q=Math.min(Math.max(0,Math.floor(Number(amount)||0)),Math.floor(fuelCapacity(k)-S.fuel[k]));const cost=Math.round(q*f.price);
+ if(!q)return {ok:false,message:&#x27;Sklad je plný.&#x27;};if(S.money&lt;cost)return {ok:false,message:&#x27;Nedostatok peňazí (&#x27;+cost.toLocaleString(&#x27;sk-SK&#x27;)+&#x27; €).&#x27;};
+ S.money-=cost;S.fuel[k]+=q;return {ok:true,message:&#x27;Nakúpené &#x27;+q.toLocaleString(&#x27;sk-SK&#x27;)+&#x27; &#x27;+f.unit+&#x27; za &#x27;+cost.toLocaleString(&#x27;sk-SK&#x27;)+&#x27; €.&#x27;};}
+function fuelLimit(k,requested){const f=FUEL[k];if(!f)return requested;const actual=Math.max(0,Math.min(requested,S.fuel[k]/(f.perMWh*DT)));
+ S.fuel[k]=Math.max(0,S.fuel[k]-actual*f.perMWh*DT);return actual;}
+
+const TH={cl:{min:.4,ramp:300,wu:6},ga:{min:.3,ramp:400,wu:1},oi:{min:.3,ramp:300,wu:1}};
+const BAT_FIX=20000,FIXH=(PL.reduce((a,P)=&gt;a+P.fix,0)+BAT_FIX)/24;
+const CAPOF=k=&gt;PL.find(p=&gt;p.k===k).cap;
+$(&#x27;pg&#x27;).innerHTML=PL.map(p=&gt;`&lt;div class=&quot;pc&quot;&gt;&lt;b style=&quot;color:${p.c}&quot;&gt;${p.i} ${p.n}&lt;/b&gt;
+&lt;div class=&quot;row&quot;&gt;&lt;span&gt;Výkon: &lt;b id=&quot;${p.k}A&quot;&gt;0&lt;/b&gt; MW&lt;/span&gt;&lt;span id=&quot;${p.k}R&quot;&gt;&lt;/span&gt;&lt;/div&gt;
+&lt;input type=&quot;range&quot; id=&quot;${p.k}&quot; min=&quot;${p.k===&#x27;nu&#x27;?50:0}&quot; max=&quot;100&quot; value=&quot;${p.def||0}&quot;&gt;
+&lt;div class=&quot;row&quot;&gt;&lt;span&gt;◀ menší výkon&lt;/span&gt;&lt;span&gt;väčší výkon ▶&lt;/span&gt;&lt;/div&gt;
+&lt;div class=&quot;row&quot;&gt;&lt;span&gt;Denný náklad: &lt;b id=&quot;${p.k}C&quot;&gt;0&lt;/b&gt;&lt;/span&gt;&lt;span id=&quot;${p.k}S&quot;&gt;&lt;/span&gt;&lt;/div&gt;
+&lt;div class=&quot;k&quot;&gt;${p.note}&lt;/div&gt;&lt;/div&gt;`).join(&#x27;&#x27;);
+// zdroje v schéme siete
+const SRC=[[&#x27;nu&#x27;,&#x27;☢&#x27;,&#x27;--nu&#x27;],[&#x27;so&#x27;,&#x27;☀&#x27;,&#x27;--so&#x27;],[&#x27;hy&#x27;,&#x27;💧&#x27;,&#x27;--ps&#x27;],[&#x27;wi&#x27;,&#x27;💨&#x27;,&#x27;#12a5a5&#x27;],[&#x27;cl&#x27;,&#x27;🪨&#x27;,&#x27;--dem&#x27;],[&#x27;ga&#x27;,&#x27;🔥&#x27;,&#x27;#e8741e&#x27;],[&#x27;oi&#x27;,&#x27;🛢&#x27;,&#x27;#9c6b3c&#x27;],[&#x27;ps&#x27;,&#x27;🔋&#x27;,&#x27;--ok&#x27;]];
+(function(){let h=&#x27;&#x27;;SRC.forEach(([k,ic],i)=&gt;{const y=22+i*42,ey=170+(i-3.5)*7,ex=190-Math.sqrt(34*34-(ey-170)*(ey-170));
+h+=`&lt;line id=&quot;ln_${k}&quot; x1=&quot;92&quot; y1=&quot;${y}&quot; x2=&quot;${ex.toFixed(1)}&quot; y2=&quot;${ey}&quot;/&gt;&lt;text x=&quot;18&quot; y=&quot;${y+8}&quot; font-size=&quot;22&quot; text-anchor=&quot;middle&quot;&gt;${ic}&lt;/text&gt;&lt;text id=&quot;tx_${k}&quot; x=&quot;86&quot; y=&quot;${y-5}&quot; font-size=&quot;11&quot; text-anchor=&quot;end&quot;&gt;&lt;/text&gt;`});
+$(&#x27;src&#x27;).innerHTML=h;
+let t=&#x27;&#x27;;for(let i=0;i&lt;12;i++){const a=i*Math.PI/6;t+=`&lt;line x1=&quot;${(50+36*Math.sin(a)).toFixed(1)}&quot; y1=&quot;${(50-36*Math.cos(a)).toFixed(1)}&quot; x2=&quot;${(50+41*Math.sin(a)).toFixed(1)}&quot; y2=&quot;${(50-41*Math.cos(a)).toFixed(1)}&quot;/&gt;`}
+$(&#x27;ckt&#x27;).innerHTML=t})();
+function demandBase(h){const g=(m,s)=&gt;Math.exp(-Math.pow((h-m)/s,2));return 900+250*g(8,2.4)+320*g(19,2.6)+80*g(13,2)}
+const START=5e6;
+// mesačné tabuľky (január..december): východ/západ slnka, špička FV, priemerná oblačnosť, sezónna spotreba, priemerná veľkoobchodná cena SK 2025 (€/MWh), dostupnosť vody, priemerný vietor
+const SM={d0:[7.3,6.8,6,5.8,5,4.6,4.8,5.4,6,6.6,6.5,7.2],d1:[16.2,17.2,18,19.6,20.5,21.2,21,20.2,19,17.7,16.3,15.8],pk:[.28,.4,.55,.7,.78,.8,.8,.76,.66,.48,.4,.28],cl:[.35,.4,.48,.52,.56,.58,.6,.6,.54,.46,.42,.36],dm:[1.08,1.07,1.02,.96,.92,.9,.89,.9,.95,1,1.04,1.08],pm:[140,153,105,85,77,80,90,88,94,98,120,111],hy:[.7,.7,.9,1,1,.9,.75,.65,.6,.65,.7,.7],wi:[.42,.42,.38,.32,.26,.22,.2,.2,.26,.34,.4,.44]};
+function cloud(t,c){return Math.max(.1,Math.min(1,c+.35*Math.sin(t*.9+1)*Math.sin(t*.23)))}
+function wind(t,b){return Math.max(.03,Math.min(1,b+.28*Math.sin(t*.31+1.7)*Math.sin(t*.07+.4)+.12*Math.sin(t*1.3+3)))}
+const WEATHER_EVENTS=[
+ {id:&#x27;drought&#x27;,icon:&#x27;🏜️&#x27;,name:&#x27;Sucho&#x27;,desc:&#x27;Menej vody v nádržiach, viac slnka a vyšší odber na chladenie.&#x27;,days:4,hy:.65,so:1.20,wi:1,dm:1.04},
+ {id:&#x27;rain&#x27;,icon:&#x27;🌧️&#x27;,name:&#x27;Výdatný dážď&#x27;,desc:&#x27;Vodné elektrárne získajú viac vody, solárne panely menej svetla.&#x27;,days:4,hy:1.30,so:.68,wi:1.04,dm:.99},
+ {id:&#x27;wind&#x27;,icon:&#x27;🌬️&#x27;,name:&#x27;Silný vietor&#x27;,desc:&#x27;Vyšší výkon vetra, ale obmedzenie turbín pri nebezpečných nárazoch a viac oblačnosti.&#x27;,days:3,hy:1,so:.85,wi:1.32,dm:1.02},
+ {id:&#x27;tornado&#x27;,icon:&#x27;🌪️&#x27;,name:&#x27;Tornádo&#x27;,desc:&#x27;Extrémne nárazy vynútia odstavenie časti veterných turbín, po búrke pribudne voda.&#x27;,days:2,hy:1.13,so:.76,wi:.56,dm:1.05},
+ {id:&#x27;tsunami&#x27;,icon:&#x27;🌊&#x27;,name:&#x27;Tsunami na pobreží&#x27;,coastal:true,desc:&#x27;Pobrežné poškodenie zvyšuje spotrebu a obmedzuje výrobu; zvýšené prietoky mierne pomáhajú vodným zdrojom.&#x27;,days:2,hy:1.08,so:.80,wi:.72,dm:1.09},
+ {id:&#x27;cold&#x27;,icon:&#x27;🥶&#x27;,name:&#x27;Veľká zima&#x27;,desc:&#x27;Výraznejší odber na kúrenie, viac vetra a slabšie vodné prietoky.&#x27;,days:6,hy:.83,so:.90,wi:1.18,dm:1.13},
+ {id:&#x27;cloud&#x27;,icon:&#x27;☁️&#x27;,name:&#x27;Oblačno&#x27;,desc:&#x27;Menej solárnej energie, mierne viac vetra a nižšia spotreba na chladenie.&#x27;,days:3,hy:1.04,so:.58,wi:1.12,dm:.97},
+ {id:&#x27;heat&#x27;,icon:&#x27;🌡️&#x27;,name:&#x27;Vlna horúčav&#x27;,desc:&#x27;Veľmi dobré slnečné podmienky, slabšie vodné zdroje a vyšší odber klimatizácií.&#x27;,days:4,hy:.80,so:1.24,wi:.93,dm:1.11},
+ {id:&#x27;snow&#x27;,icon:&#x27;❄️&#x27;,name:&#x27;Snehová búrka&#x27;,desc:&#x27;Sneh zakrýva panely, silnejší vietor pomáha turbínam a rastie dopyt.&#x27;,days:3,hy:.94,so:.48,wi:1.20,dm:1.10},
+ {id:&#x27;flood&#x27;,icon:&#x27;🌊&#x27;,name:&#x27;Povodeň&#x27;,desc:&#x27;Viac vody pre hydroelektrárne, ale vysoká hladina vyžaduje obmedzenia a slnka je menej.&#x27;,days:3,hy:1.17,so:.70,wi:1.06,dm:1.04},
+ {id:&#x27;fog&#x27;,icon:&#x27;🌫️&#x27;,name:&#x27;Hustá hmla&#x27;,desc:&#x27;Slabšie solárne podmienky, menej vetra a mierne nižšia spotreba.&#x27;,days:3,hy:1.04,so:.64,wi:.86,dm:.98},
+ {id:&#x27;clear&#x27;,icon:&#x27;☀️&#x27;,name:&#x27;Jasné počasie&#x27;,desc:&#x27;Výborná solárna výroba, ale slabší vietor a menej vody v nádržiach.&#x27;,days:4,hy:.91,so:1.30,wi:.77,dm:1.03},
+ {id:&#x27;storm&#x27;,icon:&#x27;⛈️&#x27;,name:&#x27;Búrky&#x27;,desc:&#x27;Viac vody a vetra, menej slnka; nárazy môžu obmedziť veterné turbíny.&#x27;,days:3,hy:1.21,so:.61,wi:1.09,dm:1.05},
+ {id:&#x27;dust&#x27;,icon:&#x27;🏜️&#x27;,name:&#x27;Prachová búrka&#x27;,desc:&#x27;Prach znižuje výkon panelov, vietor pomáha turbínam a stúpa potreba filtrácie.&#x27;,days:3,hy:.94,so:.59,wi:1.17,dm:1.03},
+ {id:&#x27;ice&#x27;,icon:&#x27;🧊&#x27;,name:&#x27;Námraza&#x27;,desc:&#x27;Namŕzanie obmedzuje veterné turbíny a solárne panely, chlad zvyšuje dopyt.&#x27;,days:3,hy:.92,so:.78,wi:.61,dm:1.08},
+ {id:&#x27;spring&#x27;,icon:&#x27;🌱&#x27;,name:&#x27;Jarné topenie snehu&#x27;,desc:&#x27;Vodné elektrárne majú viac vody, ale oblačnosť uberá solárny výkon.&#x27;,days:4,hy:1.29,so:.86,wi:.97,dm:.98}
+];
+const weatherNow=()=&gt;S?.weather&amp;&amp;S.t&lt;S.weather.until?S.weather:null;
+function weatherStep(){
+ const week=Math.floor(S.t/168);if(week&lt;1||week&lt;=S.weatherWeek)return;S.weatherWeek=week;
+ const coastal=window.parent.PowerplantBridge?.isCoastal?.()===true;
+ let options=WEATHER_EVENTS.filter(e=&gt;!e.coastal||coastal).filter(e=&gt;e.id!==S.lastWeatherId);
+ // Tornádo a tsunami sú výrazne vzácnejšie než bežné počasie.
+ const weighted=options.map(e=&gt;({e,w:e.id===&#x27;tornado&#x27;?.09:e.id===&#x27;tsunami&#x27;?.045:1}));
+ let roll=Math.random()*weighted.reduce((a,x)=&gt;a+x.w,0),chosen=weighted[0].e;
+ for(const item of weighted){roll-=item.w;if(roll&lt;=0){chosen=item.e;break}}
+ const severity=.75+Math.random()*.5;
+ const duration=chosen.id===&#x27;tornado&#x27;?1+Math.round(Math.random()):chosen.id===&#x27;tsunami&#x27;?2:chosen.id===&#x27;cold&#x27;?6+Math.round(Math.random()):Math.max(2,Math.min(7,Math.round(chosen.days+(severity-1)*3)));
+ const scale=k=&gt;Math.max(.35,Math.min(1.65,1+(chosen[k]-1)*severity));
+ S.weather={...chosen,hy:scale(&#x27;hy&#x27;),so:scale(&#x27;so&#x27;),wi:scale(&#x27;wi&#x27;),dm:scale(&#x27;dm&#x27;),severity,days:duration,start:S.t,until:S.t+duration*24};
+ S.lastWeatherId=chosen.id;
+}
+
+function nextSurge(t){return t+7+Math.random()*8}
+function fmtE(v){return v&gt;=1e6?(v/1e6).toFixed(2).replace(&#x27;.&#x27;,&#x27;,&#x27;)+&#x27; M€&#x27;:Math.round(v/1e3)+&#x27; tis. €&#x27;}
+function thTarget(k,sl){const P=TH[k];return sl&lt;P.min*50?0:Math.max(sl/100,P.min)*CAPOF(k)}
+function thermal(k,sl){const P=TH[k],mn=P.min*CAPOF(k),tg=thTarget(k,sl),r=P.ramp*DT;
+if(tg===0){S.wu[k]=0;S.th[k]=Math.max(0,S.th[k]-r);return}
+if(S.th[k]===0){if(S.wu[k]&lt;P.wu){S.wu[k]++;return}S.th[k]=mn}
+S.th[k]+=Math.max(-r,Math.min(r,tg-S.th[k]))}
+function init(){S={t:0,nuc:600,lvl:.5,th:{cl:0,ga:0,oi:0},wu:{cl:0,ga:0,oi:0},fuel:Object.fromEntries(Object.entries(FUEL).map(([k,f])=&gt;[k,f.initial])),fuelCapacity:Object.fromEntries(Object.entries(FUEL).map(([k,f])=&gt;[k,f.capacity])),fuelUpgrades:Object.fromEntries(Object.keys(FUEL).map(k=&gt;[k,0])),air:0,hist:[],stress:0,served:0,lost:0,money:START,em:0,sat:100,negH:0,days:[],L:{b:{h:0,t:0},f:{h:0,t:0}},dayStart:START,last:null,surge:null,nextS:nextSurge(72),weather:null,weatherWeek:0,lastWeatherId:null,over:false};
+$(&#x27;end&#x27;).style.display=&#x27;none&#x27;;PL.forEach(P=&gt;$(P.k).value=P.def||0);$(&#x27;ps&#x27;).value=0;clearInterval(timer);run();tick()}
+let speedLast=performance.now(),speedBudget=0;
+function run(){
+ clearInterval(timer);speedLast=performance.now();speedBudget=0;
+ // 1 herná hodina = 500 ms pri 1×. Akcelerácia funguje aj nad 20×.
+ timer=setInterval(()=>{
+  const now=performance.now(),elapsed=Math.min(250,now-speedLast);speedLast=now;
+  if(paused||S?.over){speedBudget=0;return}
+  speedBudget+=elapsed*speed/500;
+  const count=Math.min(24,Math.floor(speedBudget));
+  for(let i=0;i<count;i++){if(paused||S?.over)break;tick();speedBudget-=1}
+ },25);
+}
+function tick(){
+if(paused||S.over)return;
+weatherStep();const wx=weatherNow(),h=S.t%24,mon=new Date(2026,10,6,Math.floor(S.t)).getMonth(),sun=Math.max(0,Math.sin(Math.PI*(h-SM.d0[mon])/(SM.d1[mon]-SM.d0[mon])))*SM.pk[mon];
+// surge scheduling: warning 1h ahead, lasts 3h
+let warn=&#x27;&#x27;;
+if(!S.surge&amp;&amp;S.t&gt;=S.nextS-1){S.surge={start:S.nextS,end:S.nextS+3,d:(Math.random()&lt;.65?1:-1)*(150+Math.random()*150)*(.4+.6*Math.min(1,S.t/168))}}
+let sg=0;
+if(S.surge){if(S.t&gt;=S.surge.start&amp;&amp;S.t&lt;S.surge.end)sg=S.surge.d;
+ else if(S.t&lt;S.surge.start)warn=(S.surge.d&gt;0?&#x27;⚠ Varovanie: Nemecko o hodinu zvýši odber o ~&#x27;:&#x27;⚠ Varovanie: Nemecko o hodinu zníži odber o ~&#x27;)+Math.abs(Math.round(S.surge.d))+&#x27; MW&#x27;;
+ else{S.surge=null;S.nextS=nextSurge(S.t)}}
+const ramp=.4+.6*Math.min(1,S.t/168),dB0=demandBase(h)*ramp*SM.dm[mon]*(wx?.dm||1);
+const ownedDemand=window.parent.PowerplantBridge?.getOwnedDemand(h);
+const dem=ownedDemand!==null&amp;&amp;ownedDemand!==undefined ? Math.max(1,ownedDemand*(wx?.dm||1)+sg) : dB0+sg;
+// nuclear ramp
+const tgt=$(&#x27;nu&#x27;).value/100*1000,r=600*DT;
+S.nuc+=Math.max(-r,Math.min(r,tgt-S.nuc));
+// solar, wind, hydro
+const damage=window.parent.PowerplantBridge?.getDamageFactor?.()||1;
+const sMax=800*sun*cloud(S.t,SM.cl[mon])*(wx?.so||1)*damage,sol=sMax*$(&#x27;so&#x27;).value/100;
+const wMax=600*Math.min(1,wind(S.t,SM.wi[mon])*(wx?.wi||1))*damage,win=wMax*$(&#x27;wi&#x27;).value/100;
+const hMax=350*Math.min(1,SM.hy[mon]*(wx?.hy||1))*damage,hyd=hMax*$(&#x27;hy&#x27;).value/100;
+// fossil plants
+[&#x27;cl&#x27;,&#x27;ga&#x27;,&#x27;oi&#x27;].forEach(k=&gt;thermal(k,+$(k).value));
+const O={nu:fuelLimit(&#x27;nu&#x27;,S.nuc),so:sol,hy:hyd,wi:win,cl:fuelLimit(&#x27;cl&#x27;,S.th.cl),ga:fuelLimit(&#x27;ga&#x27;,S.th.ga),oi:fuelLimit(&#x27;oi&#x27;,S.th.oi)},AV={so:sMax,wi:wMax,hy:hMax};
+// battery
+let p=+$(&#x27;ps&#x27;).value;
+if(p&gt;0)p=Math.min(p,S.lvl*5000/DT);
+if(p&lt;0)p=-Math.min(-p,(1-S.lvl)*5000/DT/.8);
+S.lvl+=p&gt;0?-p*DT/.97/5000:-p*DT*.8/5000;
+S.lvl=Math.max(0,Math.min(1,S.lvl));
+let gen=0,varC=0,emP=0;PL.forEach(P=&gt;{gen+=O[P.k];varC+=(FUEL[P.k]?FUEL[P.k].other:P.vr)*O[P.k];emP+=P.em*O[P.k]});
+const net=gen+p,imb=net-dem,freq=50+imb/2000;
+const G=gridStep(dem,net);S.stress=G.maxHeat;
+S.served+=Math.min(net,dem)*DT/1000;S.lost+=Math.abs(imb)*DT/1000;
+const price=Math.max(5,SM.pm[mon]+.18*(dB0/ramp/SM.dm[mon]-1075)-.07*(sol+win)+(sg&gt;0?40:sg&lt;0?-30:0)),defi=Math.max(0,dem-net),sup=G.served,shortage=Math.max(defi,G.nNeed-G.served);
+S.money+=sup*DT*price*(.4+.6*S.sat/100)-(FIXH+varC)*DT-Math.abs(imb)*DT*price*.5-Math.abs(p)*DT*3-Math.max(0,50-S.sat)*DT*40;
+const emR=shortage*.49+emP;S.em+=emR*DT;S.emBreakdown={};PL.forEach(P=&gt;S.emBreakdown[P.k]=P.em*O[P.k]);S.emBreakdown.backup=shortage*.49;S.emRate=emR;
+S.air+=(emR-S.air)/120*DT;
+{const pollution=Math.max(0,S.air-80)*.12,blackout=70*G.lostDem/Math.max(1,dem),shortfall=90*G.low;const tg=Math.max(0,Math.min(100,100-pollution-blackout-shortfall));const before=S.sat;S.sat+=(tg-S.sat)*(tg&lt;S.sat?.115:.22);S.satBreakdown={pollution,blackout,shortfall,target:tg,delta:S.sat-before,air:S.air};}
+S.hist.push({d:dem,n:net,s:sMax});if(S.hist.length&gt;96)S.hist.shift();
+if(Math.floor((S.t+DT)/24)&gt;Math.floor(S.t/24)){S.last=S.money-S.dayStart;S.dayStart=S.money;S.days.push(S.last);if(S.days.length&gt;90)S.days.shift()}S.t+=DT;const earn3=S.days.length&gt;=3?Math.max(1e6,S.days.reduce((a,b)=&gt;a+b,0)/S.days.length*90):Infinity;
+// UI
+const tc=S.t-DT,dd=new Date(2026,10,6,Math.floor(tc));
+$(&#x27;cd&#x27;).textContent=dd.toLocaleDateString(&#x27;sk-SK&#x27;,{day:&#x27;numeric&#x27;,month:&#x27;long&#x27;});$(&#x27;cy&#x27;).textContent=dd.getFullYear();
+drawClock(tc,h,mon);
+$(&#x27;dem&#x27;).textContent=Math.round(dem)+&#x27; MW&#x27;;$(&#x27;net&#x27;).textContent=Math.round(net)+&#x27; MW&#x27;;
+$(&#x27;freq&#x27;).textContent=freq.toFixed(2).replace(&#x27;.&#x27;,&#x27;,&#x27;)+&#x27; Hz&#x27;;
+$(&#x27;freq&#x27;).style.color=Math.abs(imb)&gt;TOL?&#x27;var(--bad)&#x27;:&#x27;var(--ok)&#x27;;
+$(&#x27;stl&#x27;).textContent=Math.round(S.stress)+&#x27; %&#x27;;$(&#x27;stb&#x27;).style.width=S.stress+&#x27;%&#x27;;
+$(&#x27;stb&#x27;).style.background=S.stress&gt;60?&#x27;var(--bad)&#x27;:S.stress&gt;25?&#x27;var(--so)&#x27;:&#x27;var(--ok)&#x27;;
+PL.forEach(P=&gt;{const k=P.k,o=O[k];let rt=&#x27;&#x27;,stt=&#x27;&#x27;;
+$(k+&#x27;A&#x27;).textContent=Math.round(o);
+if(k===&#x27;nu&#x27;)rt=&#x27;cieľ: &lt;b&gt;&#x27;+$(&#x27;nu&#x27;).value+&#x27;&lt;/b&gt; %&#x27;;
+else if(AV[k]!==undefined)rt=&#x27;dostupné: &lt;b&gt;&#x27;+Math.round(AV[k])+&#x27;&lt;/b&gt; MW&#x27;;
+else{rt=&#x27;cieľ: &lt;b&gt;&#x27;+Math.round(thTarget(k,+$(k).value)/P.cap*100)+&#x27;&lt;/b&gt; %&#x27;;
+ stt=S.th[k]&gt;0?&#x27;beží&#x27;:thTarget(k,+$(k).value)&gt;0?&#x27;rozbeh o &#x27;+(TH[k].wu-S.wu[k]+1)+&#x27; h&#x27;:&#x27;vypnutá&#x27;}
+$(k+&#x27;R&#x27;).innerHTML=rt;$(k+&#x27;S&#x27;).textContent=stt;$(k+&#x27;C&#x27;).textContent=fmtE(P.fix+(FUEL[k]?FUEL[k].other:P.vr)*o*24)});
+$(&#x27;psA&#x27;).textContent=(p&gt;=0?&#x27;Vybíja &#x27;:&#x27;Nabíja &#x27;)+Math.abs(Math.round(p))+&#x27; MW&#x27;;
+$(&#x27;psL&#x27;).textContent=Math.round(S.lvl*100);$(&#x27;psb&#x27;).style.width=S.lvl*100+&#x27;%&#x27;;$(&#x27;psC&#x27;).textContent=fmtE(BAT_FIX+Math.abs(p)*3*24);
+$(&#x27;sc&#x27;).textContent=S.served.toFixed(1).replace(&#x27;.&#x27;,&#x27;,&#x27;)+&#x27; GWh&#x27;;$(&#x27;ls&#x27;).textContent=S.lost.toFixed(1).replace(&#x27;.&#x27;,&#x27;,&#x27;)+&#x27; GWh&#x27;;
+const m=S.money;$(&#x27;mo&#x27;).textContent=Math.abs(m)&gt;=1e6?(m/1e6).toFixed(2).replace(&#x27;.&#x27;,&#x27;,&#x27;)+&#x27; M€&#x27;:Math.round(m/1e3)+&#x27; tis. €&#x27;;$(&#x27;mo&#x27;).style.color=m&lt;0?&#x27;var(--bad)&#x27;:&#x27;var(--ok)&#x27;;
+$(&#x27;pr&#x27;).innerHTML=&#x27;dnes &lt;b&gt;&#x27;+fmtk(S.money-S.dayStart)+&#x27;&lt;/b&gt;&#x27;+(S.last!==null?&#x27; · včera &#x27;+fmtk(S.last):&#x27;&#x27;)+&#x27;&lt;br&gt;spolu &#x27;+fmtk(S.money-START)+&#x27; · cena &#x27;+Math.round(price)+&#x27; €/MWh&#x27;+(S.negH&gt;0?&#x27;&lt;br&gt;&lt;span style=&quot;color:var(--bad)&quot;&gt;⚠ v mínuse &#x27;+Math.round(S.negH/24)+&#x27; dní z 30 · dlh &#x27;+(-S.money/1e6).toFixed(1)+&#x27; M€ / limit &#x27;+(earn3===Infinity?&#x27;–&#x27;:(earn3/1e6).toFixed(1)+&#x27; M€&#x27;)+&#x27;&lt;/span&gt;&#x27;:&#x27;&#x27;);$(&#x27;em&#x27;).textContent=Math.round(S.em)+&#x27; t&#x27;;$(&#x27;emi&#x27;).textContent=&#x27;intenzita &#x27;+Math.round(sup&gt;0?emR/sup*1000:0)+&#x27; g/kWh&#x27;;
+const airPenalty=Math.max(0,S.air-80)*.12, outagePenalty=70*G.lostDem/dem, shortagePenalty=90*G.low;
+ const targetSat=Math.max(0,Math.min(100,100-airPenalty-outagePenalty-shortagePenalty));
+ $(&#x27;satTip&#x27;).innerHTML=&#x27;&lt;b&gt;Čo aktuálne ovplyvňuje spokojnosť:&lt;/b&gt;&lt;br&gt;Východisková hodnota: 100 %&lt;br&gt;Znečistenie ovzdušia: −&#x27;+airPenalty.toFixed(1)+&#x27; bodu&lt;br&gt;Výpadky siete: −&#x27;+outagePenalty.toFixed(1)+&#x27; bodu&lt;br&gt;Nedostatok dodávky: −&#x27;+shortagePenalty.toFixed(1)+&#x27; bodu&lt;br&gt;Cieľová spokojnosť: &#x27;+targetSat.toFixed(1)+&#x27; %&lt;br&gt;&lt;small&gt;Skutočná spokojnosť sa k cieľu mení postupne.&lt;/small&gt;&#x27;;
+ $(&#x27;sat&#x27;).textContent=Math.round(S.sat)+&#x27; %&#x27;;$(&#x27;satb&#x27;).style.width=S.sat+&#x27;%&#x27;;$(&#x27;satb&#x27;).style.background=S.sat&lt;35?&#x27;var(--bad)&#x27;:S.sat&lt;65?&#x27;var(--so)&#x27;:&#x27;var(--ok)&#x27;;
+
+$(&#x27;msg&#x27;).textContent=warn||G.msg||(imb&gt;TOL?&#x27;Prebytok &#x27;+Math.round(imb)+&#x27; MW – sieť sa preťažuje, uber výrobu alebo nabíjaj batériu.&#x27;:imb&lt;-TOL?&#x27;Deficit &#x27;+Math.round(-imb)+&#x27; MW – pridaj výkon alebo vypni nabíjanie.&#x27;:&#x27;Sieť je stabilná.&#x27;);
+$(&#x27;msg&#x27;).style.color=(warn||G.msg||Math.abs(imb)&gt;TOL)?&#x27;var(--bad)&#x27;:&#x27;var(--ok)&#x27;;
+draw();flows(O,p,G);
+window.parent.PowerplantBridge?.onTick({hour:h,net,served:G.served,money:S.money,satisfaction:S.sat,emissions:S.em});
+S.negH=S.money&lt;0?S.negH+DT:0;if(S.negH&gt;=720)finish(false,&#x27;Bankrot – účet bol mesiac v mínuse.&#x27;);else if(S.money&lt;0&amp;&amp;-S.money&gt;earn3)finish(false,&#x27;Bankrot – dlh &#x27;+(-S.money/1e6).toFixed(1)+&#x27; M€ prevyšuje zárobok za 3 mesiace.&#x27;);
+}
+function finish(win,why){S.over=true;$(&#x27;end&#x27;).style.display=&#x27;block&#x27;;
+$(&#x27;et&#x27;).textContent=win?&#x27;🎉 Zvládol si to!&#x27;:&#x27;💥 &#x27;+why;
+$(&#x27;es&#x27;).textContent=&#x27;Dodané spotrebe: &#x27;+S.served.toFixed(1)+&#x27; GWh, prežité &#x27;+S.t.toFixed(0)+&#x27; h, zisk &#x27;+Math.round(S.money/1000)+&#x27; tis. €, emisie &#x27;+Math.round(S.em)+&#x27; t CO₂, spokojnosť &#x27;+Math.round(S.sat)+&#x27; %.&#x27;}
+// analógové hodiny: jediná hodinová ručička, pozadie sa mení podľa dňa/noci (rovnaké východy a západy slnka ako solár)
+let lastTc=-1,clockFrom=0,clockTo=0,clockStarted=performance.now();
+function animateClock(now){if(S&amp;&amp;!paused&amp;&amp;!S.over){const progress=Math.min(1,(now-clockStarted)/(500/speed));const t=clockFrom+(clockTo-clockFrom)*progress;$(&#x27;hh&#x27;).style.transform=`rotate(${t*15}deg)`;}requestAnimationFrame(animateClock)}
+requestAnimationFrame(animateClock);
+function drawClock(tc,h,mon){
+ // Full 24-hour dial with a fixed daylight sector based on sunrise and sunset.
+ const sunrise=SM.d0[mon],sunset=SM.d1[mon];
+ const pt=(hour,r)=&gt;{const a=(hour%24)/24*Math.PI*2-Math.PI/2;return [50+r*Math.cos(a),50+r*Math.sin(a)]};
+ const wedge=(start,end,r)=&gt;{const a=pt(start,r),b=pt(end,r),large=end-start&gt;12?1:0;return `M 50 50 L ${a[0]} ${a[1]} A ${r} ${r} 0 ${large} 1 ${b[0]} ${b[1]} Z`};
+ const arc=(start,end,r)=&gt;{const a=pt(start,r),b=pt(end,r),large=end-start&gt;12?1:0;return `M ${a[0]} ${a[1]} A ${r} ${r} 0 ${large} 1 ${b[0]} ${b[1]}`};
+ // Keep the day/night segments and their rim colors fixed throughout the day.
+ const start=sunrise;
+ const span=sunset-sunrise;
+ $(&#x27;daySlice&#x27;).setAttribute(&#x27;d&#x27;,wedge(start,start+span,44));
+ $(&#x27;dayRim&#x27;).setAttribute(&#x27;d&#x27;,arc(start,start+span,46));
+ if(tc&lt;lastTc){clockFrom=tc;clockTo=tc}else{clockFrom=lastTc;clockTo=tc}clockStarted=performance.now();lastTc=tc}
+const CAP={b:600,f:1400};
+function fmtk(v){return (v&gt;=0?&#x27;+&#x27;:&#x27;&#x27;)+Math.round(v/1e3)+&#x27; tis. €&#x27;}
+function gridStep(dem,net){
+const L=S.L,TB=+$(&#x27;lb&#x27;).value/100*900,TF=+$(&#x27;lf&#x27;).value/100*2000,d={A:.6*dem,B:.4*dem};
+const fo=L.f.t&gt;0,cut={A:fo,B:fo||L.b.t&gt;0},nA=cut.A?0:d.A,nB=cut.B?0:d.B;
+const ent=fo?0:Math.min(net,TF),sA=Math.min(nA,ent),e=Math.max(0,ent-nA-nB);
+const req=nB+.5*e,fb=cut.B?0:Math.min(req,TB,Math.max(0,ent-sA)),sB=Math.min(nB,fb);
+const stuck=cut.B?0:Math.max(0,req-Math.max(fb,nB));
+const lostDem=(cut.A?d.A:0)+(cut.B?d.B:0),fF=fo?0:ent+.8*lostDem+.8*stuck;
+let mh=0;
+const upd=(k,load,cap,slow)=&gt;{const l=L[k];if(l.t&gt;0){l.t--;if(l.t==0)l.h=40}else{const r=load/cap;if(r&gt;1)l.h+=(r-1)*240*slow;else l.h=Math.max(0,l.h-16);if(l.h&gt;=100){l.h=100;l.t=2}}mh=Math.max(mh,l.h)};
+upd(&#x27;b&#x27;,fb,CAP.b,1);upd(&#x27;f&#x27;,fF,CAP.f,.5);
+const need=nA+nB,served=sA+sB,low=need&gt;0?Math.max(0,(need-served)/need):0;
+const off=[cut.A&amp;&amp;&#x27;Mesto A&#x27;,cut.B&amp;&amp;&#x27;Mesto B&#x27;].filter(Boolean);
+let msg=&#x27;&#x27;;if(off.length)msg=&#x27;⚡ Výpadok: &#x27;+off.join(&#x27;, &#x27;);else if(L.f.h&gt;50)msg=&#x27;⚠ Preťažený prívod z elektrární!&#x27;;else if(L.b.h&gt;50)msg=&#x27;⚠ Preťažené vedenie A→B!&#x27;;else if(sB&lt;nB-5)msg=&#x27;Mesto B dostáva menej energie, než potrebuje (vedenie je škrtené).&#x27;;
+return{d,cut,fb,sA,sB,nA,nB,served,nNeed:need,low,lostDem,maxHeat:mh,msg}}
+function flows(O,p,G){
+const cs=getComputedStyle(document.documentElement),c=v=&gt;cs.getPropertyValue(v),cl=v=&gt;v.startsWith(&#x27;--&#x27;)?c(v):v;
+const f=(id,mw,col,rev,cap)=&gt;{const e=$(id);e.style.strokeWidth=.8+Math.abs(mw)/(cap||1000)*6;e.style.stroke=col;e.style.opacity=Math.abs(mw)&lt;1?.35:1;e.classList.toggle(&#x27;rev&#x27;,!!rev)};
+SRC.forEach(([k,,col])=&gt;{const mw=k===&#x27;ps&#x27;?p:O[k];f(&#x27;ln_&#x27;+k,mw,cl(col),k===&#x27;ps&#x27;&amp;&amp;p&lt;0);$(&#x27;tx_&#x27;+k).textContent=(k===&#x27;ps&#x27;&amp;&amp;p&gt;0?&#x27;+&#x27;:&#x27;&#x27;)+Math.round(mw)+&#x27; MW&#x27;});
+const col=h=&gt;h&gt;=100?c(&#x27;--bad&#x27;):h&gt;50?c(&#x27;--so&#x27;):c(&#x27;--ok&#x27;),L=S.L;
+const node=(id,off,color)=&gt;{$(id).style.stroke=off?c(&#x27;--bad&#x27;):color;$(id).style.fill=off?&#x27;var(--bd)&#x27;:&#x27;var(--card)&#x27;};
+node(&#x27;nA&#x27;,G.cut.A,col(L.f.h));node(&#x27;nB&#x27;,G.cut.B,G.sB&lt;G.nB-5?c(&#x27;--so&#x27;):col(L.b.h));
+f(&#x27;lB&#x27;,G.fb,G.cut.B?c(&#x27;--bad&#x27;):col(L.b.h),false,1000);
+$(&#x27;tA&#x27;).textContent=G.cut.A?&#x27;výpadok&#x27;:Math.round(G.sA)+&#x27; / &#x27;+Math.round(G.d.A)+&#x27; MW&#x27;;
+$(&#x27;tB&#x27;).textContent=G.cut.B?&#x27;výpadok&#x27;:Math.round(G.sB)+&#x27; / &#x27;+Math.round(G.d.B)+&#x27; MW&#x27;;
+$(&#x27;tL&#x27;).textContent=&#x27;vedenie &#x27;+Math.round(L.b.h)+&#x27; %&#x27;;
+$(&#x27;tF&#x27;).textContent=&#x27;prívod &#x27;+Math.round(L.f.h)+&#x27; %&#x27;;$(&#x27;tF&#x27;).style.fill=col(L.f.h)}
+function draw(){const c=$(&#x27;cv&#x27;),x=c.getContext(&#x27;2d&#x27;),W=c.width,H=c.height,cs=getComputedStyle(document.documentElement);
+x.clearRect(0,0,W,H);const mx=3000;
+x.strokeStyle=cs.getPropertyValue(&#x27;--bd&#x27;);x.fillStyle=cs.getPropertyValue(&#x27;--mu&#x27;);x.font=&#x27;11px sans-serif&#x27;;
+for(let v=0;v&lt;=mx;v+=600){const y=H-v/mx*H;x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke();x.fillText(v+&#x27; MW&#x27;,4,y-2)}
+const line=(k,col,w)=&gt;{x.beginPath();x.strokeStyle=cs.getPropertyValue(col);x.lineWidth=w;S.hist.forEach((q,i)=&gt;{const px=i/95*W,py=H-Math.max(0,q[k])/mx*H;i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke()};
+line(&#x27;s&#x27;,&#x27;--so&#x27;,1.5);line(&#x27;d&#x27;,&#x27;--dem&#x27;,2);line(&#x27;n&#x27;,&#x27;--ps&#x27;,2.5)}
+document.querySelectorAll(&#x27;[data-s]&#x27;).forEach(b=&gt;b.onclick=()=&gt;{speed=+b.dataset.s;document.querySelectorAll(&#x27;[data-s]&#x27;).forEach(o=&gt;o.classList.toggle(&#x27;on&#x27;,o===b));run()});
+$(&#x27;p&#x27;).onclick=()=&gt;{paused=!paused;$(&#x27;p&#x27;).textContent=paused?&#x27;Pokračovať&#x27;:&#x27;Pauza&#x27;;clockFrom=clockTo;clockStarted=performance.now();speedLast=performance.now();speedBudget=0};
+window.PowerplantSimulation={getPlants:()=&gt;PL,getFuelConfig:()=&gt;FUEL,buyFuel:fuelBuy,upgradeFuelStorage,getFuelUpgradeInfo:fuelUpgradeInfo,getStartMoney:()=&gt;START,getWeather:()=&gt;weatherNow(),getState:()=&gt;S,setMoney:value=&gt;{if(S)S.money=Number(value)},pause:()=&gt;{if(!paused)document.getElementById(&#x27;p&#x27;).click()},togglePause:()=&gt;{document.getElementById(&#x27;p&#x27;).click();return paused},isPaused:()=&gt;paused,setSpeed:value=&gt;{speed=Math.max(.1,Math.min(100,Number(value)||1));run();return speed},getSpeed:()=&gt;speed};
+init();
+&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;
+" title="Energetická simulácia"></iframe><aside class="drawer left closed" id="leftDrawer"><div class="drawerHead"><strong>⚡ Moje elektrárne</strong><button id="closeLeft">✕</button></div><div id="ownedPlants"></div><div class="mutedUi">Výkon sa ovláda priamo v simulácii. Postavené objekty z mapy zatiaľ nie sú pripojené k výrobnej bilancii.</div></aside><aside class="drawer right closed" id="rightDrawer"><div class="drawerHead"><strong>📊 Prehľad siete</strong><button id="closeRight">✕</button></div><div id="details"></div></aside><div aria-live="polite" id="toast"></div><section hidden="" id="buildPalette"><div class="paletteHead"><strong id="paletteTitle">Stavba</strong><button id="closePalette">✕</button></div><div id="paletteItems"></div></section><footer id="buildBar"><button data-category="plants">🏭<span>Elektrárne</span></button><button data-category="storage">🔋<span>Úložiská</span></button><button data-category="cables">〰<span>Káble</span></button><button data-category="switches">⬡<span>Rozvádzače</span></button><div class="buildStatus" id="buildStatus">Vyber kategóriu stavania</div><button id="cancelBuild">✕ Zrušiť</button></footer></div>
+<script>
+const world=document.getElementById('world'),sim=document.getElementById('sim'),status=document.getElementById('bridgeStatus');
+const map=()=>world.contentWindow?.PowerplantMap,engine=()=>sim.contentWindow?.PowerplantSimulation;
+function tab(which){}
+
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+let disaster=null,seenDisasterStart=-1;
+const disasterLayer=document.createElement('canvas');disasterLayer.id='disasterLayer';disasterLayer.style.cssText='position:absolute;inset:var(--nav-height,74px) 0 76px;width:100%;height:calc(100% - var(--nav-height,74px) - 76px);pointer-events:none;z-index:5';document.getElementById('shell').append(disasterLayer);
+const disasterCtx=disasterLayer.getContext('2d');
+function isCoastal(){const api=map(),st=api?.getState();if(!st?.startCity)return false;const city=st.cities.find(c=>c.id===st.startCity);if(!city)return false;for(let a=0;a<16;a++){const ang=a*Math.PI/8;for(let r=100;r<=480;r+=95){const x=city.x+Math.cos(ang)*r,y=city.y+Math.sin(ang)*r;if(x<0||y<0||x>=st.w||y>=st.h)continue;const t=api.getTerrain(x,y);if(t&&t.e<=.43)return true}}return false}
+function createDisaster(w){const st=map()?.getState();if(!st)return;const coastal=w.id==='tsunami';const candidates=st.cities.filter(c=>c.unlocked);const city=candidates.length?candidates[Math.floor(Math.random()*candidates.length)]:null;const center=city||{x:st.w*.5,y:st.h*.5};disaster={id:w.id,start:w.start,until:w.until,center,damage:0,repairs:[],charged:false};
+ const items=world.contentWindow?.PowerplantConstruction?.getItems?.()||[];
+ const affected=items.filter(i=>Math.hypot(i.x-center.x,i.y-center.y)<(coastal?850:650));
+ const targets=affected.length?affected:[{id:'regional-grid',type:'grid',x:center.x,y:center.y}];
+ for(const item of targets.slice(0,4)){disaster.repairs.push({id:item.id,name:item.type==='grid'?'Regionálna sieť':(world.contentWindow?.PowerplantConstruction?.catalog?.[item.type]?.label||'Zariadenie'),cost:Math.round((coastal?105000:65000)*(0.7+Math.random()*.7)),done:false,x:item.x,y:item.y})}
+ disaster.damage=Math.min(.25,.07+disaster.repairs.length*.035);showToast((coastal?'🌊 Tsunami':'🌪️ Tornádo')+' — poškodené objekty, otvor štatistiky a oprav ich!');renderRepairs();}
+function renderRepairs(){let section=document.getElementById('disasterRepairs');if(!section){section=document.createElement('section');section.id='disasterRepairs';document.getElementById('rightDrawer').append(section)}section.replaceChildren();if(!disaster||!disaster.repairs.some(r=>!r.done)){section.hidden=true;return}section.hidden=false;const h=document.createElement('h3');h.textContent='🛠️ Opravy po '+(disaster.id==='tsunami'?'tsunami':'tornáde');section.append(h);for(const r of disaster.repairs.filter(r=>!r.done)){const btn=document.createElement('button');btn.style.cssText='width:100%;margin:5px 0;text-align:left';btn.textContent=r.name+' · opraviť za '+euro(r.cost);btn.onclick=()=>{const eng=engine(),st=eng?.getState();if(!st||st.money<r.cost){showToast('Nedostatok peňazí na opravu.');return}eng.setMoney(st.money-r.cost);r.done=true;disaster.damage=Math.max(0,disaster.damage-.06);renderRepairs();showToast('Oprava dokončená.')};section.append(btn)}}
+function renderDisaster(){const r=disasterLayer.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);if(disasterLayer.width!==Math.round(r.width*dpr)||disasterLayer.height!==Math.round(r.height*dpr)){disasterLayer.width=Math.round(r.width*dpr);disasterLayer.height=Math.round(r.height*dpr)}disasterCtx.setTransform(dpr,0,0,dpr,0,0);disasterCtx.clearRect(0,0,r.width,r.height);if(!disaster)return;
+ const w=engine()?.getWeather(),active=w&&(w.id==='tornado'||w.id==='tsunami')&&w.start===disaster.start;
+ const st=map()?.getState();if(!st)return;
+ // Poloha efektu sa mení v čase, pričom poškodené objekty ostávajú označené.
+ const now=performance.now()/1000,t=active?Math.min(1,Math.max(0,((engine()?.getState()?.t||0)-disaster.start)/((disaster.until-disaster.start)||1))):1;
+ const px=r.width*.5+Math.sin(now*.25)*r.width*.18,py=r.height*.48+Math.cos(now*.19)*r.height*.13;
+ if(active){disasterCtx.save();disasterCtx.translate(px,py);if(disaster.id==='tornado'){for(let i=0;i<7;i++){const yy=(i-3)*15,rad=15+i*5;disasterCtx.beginPath();disasterCtx.ellipse(Math.sin(now*2+i)*9,yy,rad,7,now*.3,0,Math.PI*2);disasterCtx.strokeStyle='rgba(216,231,235,.65)';disasterCtx.lineWidth=4;disasterCtx.stroke()}}else{for(let i=0;i<5;i++){disasterCtx.beginPath();disasterCtx.arc(0,0,38+i*19,Math.PI*.95,Math.PI*1.95);disasterCtx.strokeStyle='rgba(71,192,231,'+(.65-i*.1)+')';disasterCtx.lineWidth=10;disasterCtx.stroke()}}disasterCtx.restore()}
+ for(let i=0;i<disaster.repairs.length;i++){const q=disaster.repairs[i];if(q.done)continue;const x=r.width*(.36+i*.075),y=r.height*(.57+(i%2)*.06);disasterCtx.font='bold 24px system-ui';disasterCtx.fillText('🛠️',x,y)}}
+requestAnimationFrame(function loop(){renderDisaster();requestAnimationFrame(loop)});
+window.PowerplantBridge={
+ isCoastal,
+ getDamageFactor(){return disaster?1-disaster.damage:1},
+
+ getOwnedDemand(hour){const api=map(),st=api?.getState();if(!st?.startCity)return null;return st.cities.filter(c=>c.unlocked).reduce((sum,c)=>sum+api.getDemand(c.id,hour),0)},
+ onTick(data){const api=map(),st=api?.getState();if(!st)return;const wx=engine()?.getWeather();if(wx&&(wx.id==='tornado'||wx.id==='tsunami')&&wx.start!==seenDisasterStart){seenDisasterStart=wx.start;createDisaster(wx)}
+  api.setTime(data.hour);api.setMoney(data.money);
+  const owned=st.cities.filter(c=>c.unlocked),total=owned.reduce((a,c)=>a+api.getDemand(c.id,data.hour),0);
+  // Provisional allocation: no actual transmission topology yet. Only owned cities receive supply.
+  const ratio=total>0?clamp(data.served/total,0,1):0;
+  for(const c of owned){const need=api.getDemand(c.id,data.hour);api.setCitySupply(c.id,need*ratio);const target=clamp(100-(1-ratio)*85,0,100);api.setCitySatisfaction(c.id,c.satisfaction+(target-c.satisfaction)*.06)}
+  api.redraw();if(status)status.textContent=owned.length+' miest · '+Math.round(data.net)+' MW výroba · '+Math.round(data.served)+' MW dodávka · '+(data.money/1e6).toFixed(2)+' M€';
+ }
+};
+world.addEventListener('load',()=>{const w=world.contentWindow;
+ w.addEventListener('powerplant:cityUnlocked',()=>{const state=map()?.getState();if(state&&engine()?.getState())engine().setMoney(state.money)});
+ w.addEventListener('powerplant:switchboardChanged',()=>{const state=map()?.getState();if(state&&engine()?.getState())engine().setMoney(state.money)});
+ w.addEventListener('powerplant:worldGenerated',()=>{const state=map()?.getState();if(state&&engine()?.getState()){state.money=engine().getState().money}if(status)status.textContent='Vyber si prvé mesto na mape';tab('Map')});
+});
+
+const $ui=id=>document.getElementById(id),euro=n=>new Intl.NumberFormat('sk-SK',{maximumFractionDigits:0}).format(Math.round(n||0))+' €';
+let selectedCategory=null,selectedBuild=null;
+const categories={plants:['nu','so','hy','wi','cl','ga','oi'],storage:['battery','pumped'],cables:['cable'],switches:['switch11','switch12','switch13','switch23']};
+function showToast(message){const el=$ui('toast');el.textContent=message;el.style.display='block';clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>el.style.display='none',2800)}
+function openPalette(cat){selectedCategory=cat;$ui('buildPalette').hidden=false;$ui('paletteTitle').textContent={plants:'🏭 Stavba elektrární',storage:'🔋 Úložiská energie',cables:'〰 Elektrické vedenia',switches:'⬡ Rozvádzače'}[cat];document.querySelectorAll('[data-category]').forEach(b=>b.classList.toggle('selected',b.dataset.category===cat));const catalog=world.contentWindow?.PowerplantConstruction?.catalog||{};$ui('paletteItems').innerHTML='';for(const type of categories[cat]){const info=catalog[type];if(!info)continue;const b=document.createElement('button');b.className='catalogItem'+(selectedBuild===type?' selected':'');const title=document.createElement('b');title.textContent=info.icon+' '+info.label;const price=document.createElement('small');price.textContent=type==='cable'?'Cena podľa dĺžky':euro(info.cost);b.append(title,price);b.onclick=()=>{selectedBuild=type;world.contentWindow.PowerplantConstruction.setTool(type);$ui('buildStatus').textContent=info.label+' — klikni na mapu';showToast(type==='cable'?'Klikni na dva objekty, ktoré chceš prepojiť.':'Klikni na suchú pevninu, kde chceš stavať.');openPalette(cat)};$ui('paletteItems').append(b)}}
+document.querySelectorAll('[data-category]').forEach(b=>b.onclick=()=>openPalette(b.dataset.category));
+$ui('closePalette').onclick=()=>{$ui('buildPalette').hidden=true;document.querySelectorAll('[data-category]').forEach(b=>b.classList.remove('selected'))};
+$ui('cancelBuild').onclick=()=>{selectedBuild=null;selectedCategory=null;world.contentWindow?.PowerplantConstruction?.setTool(null);$ui('buildPalette').hidden=true;$ui('buildStatus').textContent='Vyber kategóriu stavania';document.querySelectorAll('[data-category]').forEach(b=>b.classList.remove('selected'))};
+function toggleDrawer(id,force){const el=$ui(id);el.classList.toggle('closed',force===undefined?!el.classList.contains('closed'):!force)}
+$ui('toggleLeft').onclick=()=>toggleDrawer('leftDrawer');$ui('toggleRight').onclick=()=>toggleDrawer('rightDrawer');$ui('closeLeft').onclick=()=>toggleDrawer('leftDrawer',false);$ui('closeRight').onclick=()=>toggleDrawer('rightDrawer',false);
+function renderPlants(){const frame=sim.contentWindow,eng=engine(),holder=$ui('ownedPlants');if(!eng?.getPlants()||!eng?.getState())return;const plants=eng.getPlants(),fuels=eng.getFuelConfig?.()||{};if(holder.children.length===plants.length)return;holder.innerHTML='';for(const p of plants){const card=document.createElement('div');card.className='plantCard';const title=document.createElement('div');title.className='plantTitle';title.textContent=p.i+' '+p.n;const meta=document.createElement('div');meta.className='plantMeta';const output=document.createElement('span');output.id='out-'+p.k;const percent=document.createElement('span');percent.id='pct-'+p.k;meta.append(output,percent);const slider=document.createElement('input');slider.type='range';slider.min=p.k==='nu'?50:0;slider.max=100;slider.value=frame.document.getElementById(p.k)?.value||0;slider.dataset.plant=p.k;slider.oninput=()=>{const source=frame.document.getElementById(p.k);if(source)source.value=slider.value;percent.textContent=slider.value+' %'};const note=document.createElement('small');note.textContent='Nastavenie cieľového výkonu';card.append(title,meta,slider,note);
+ if(fuels[p.k]){const f=fuels[p.k];const expand=document.createElement('button');expand.textContent='▸ Palivo a sklad';expand.style.cssText='width:100%;margin-top:9px;text-align:left';const detail=document.createElement('div');detail.hidden=true;detail.id='fuel-'+p.k;detail.style.cssText='padding:10px 0;font-size:12px';expand.onclick=()=>{detail.hidden=!detail.hidden;expand.textContent=(detail.hidden?'▸':'▾')+' Palivo a sklad'};const info=document.createElement('div');info.id='fuelinfo-'+p.k;detail.append(info);const buy=document.createElement('button');buy.textContent='Kúpiť '+f.batch.toLocaleString('sk-SK')+' '+f.unit+' · '+(f.batch*f.price).toLocaleString('sk-SK')+' €';buy.style.cssText='width:100%;margin-top:8px';buy.onclick=()=>{const res=engine()?.buyFuel(p.k,f.batch);showToast(res?.message||'Nákup zlyhal.');updateFuelInfo()};detail.append(buy);const upgrade=document.createElement('button');upgrade.id='upgrade-'+p.k;upgrade.style.cssText='width:100%;margin-top:7px;background:#25574e;border-color:#58bfa2';upgrade.onclick=()=>{const res=engine()?.upgradeFuelStorage(p.k);showToast(res?.message||'Upgrade zlyhal.');updateFuelInfo();updateDashboard()};detail.append(upgrade);card.append(expand,detail)}holder.append(card)}}
+function updateFuelInfo(){const eng=engine(),st=eng?.getState(),fuels=eng?.getFuelConfig?.()||{};if(!st)return;for(const [k,f] of Object.entries(fuels)){const el=$ui('fuelinfo-'+k);if(!el)continue;const q=st.fuel?.[k]||0;const mw=Number(sim.contentWindow.document.getElementById(k+'A')?.textContent)||0;const hours=mw>0?q/(mw*f.perMWh):0;const upgrade=eng.getFuelUpgradeInfo?.(k);const cap=upgrade?.capacity??f.capacity;const upgradeButton=$ui('upgrade-'+k);if(upgradeButton&&upgrade){upgradeButton.textContent='⬆ Rozšíriť sklad +'+upgrade.increase.toLocaleString('sk-SK')+' '+f.unit+' · '+upgrade.price.toLocaleString('sk-SK')+' € (úroveň '+(upgrade.level+1)+')';upgradeButton.disabled=st.money<upgrade.price||st.over;}el.textContent='Sklad: '+q.toLocaleString('sk-SK',{maximumFractionDigits:1})+' / '+cap.toLocaleString('sk-SK')+' '+f.unit+' ('+Math.round(q/cap*100)+' %) · Cena: '+f.price.toLocaleString('sk-SK')+' €/'+f.unit+' · Spotreba: '+(mw*f.perMWh).toFixed(2)+' '+f.unit+'/h · Zásoba na '+(mw?hours.toFixed(1)+' h':'—')+' · Výkon: '+mw+' MW';}}
+
+function updateDashboard(){const st=engine()?.getState(),frame=sim.contentWindow;if(!st)return;renderPlants();updateFuelInfo();syncPauseButton();const d=new Date(2026,10,6,Math.floor(st.t||0)),hour=((Math.floor(st.t||0)%24)+24)%24;const date=d.toLocaleDateString('sk-SK',{day:'numeric',month:'long',year:'numeric'});$ui('uiDate').textContent=date;updateTopClock(st.t||0);updateWeatherUI(st);updateTopIndicators(st);$ui('uiMoney').textContent=(st.money/1e6).toFixed(2).replace('.',',')+' M€';const today=st.money-st.dayStart;const monthStart=new Date(d.getFullYear(),d.getMonth(),1);const hoursFromMonth=Math.max(1,(d-monthStart)/3600000);const monthly=st.days?.slice(-Math.min(30,Math.ceil(hoursFromMonth/24)))?.reduce((a,b)=>a+b,0)||0;const fields=[['Dátum',date],['Herný čas',String(hour).padStart(2,'0')+':00'],['Bankový účet',euro(st.money)],['Príjem dnes',euro(today)],['Výsledok včera',st.last==null?'—':euro(st.last)],['Výsledok tento mesiac (orientačný)',euro(monthly+today)],['Celkový zisk / strata',euro(st.money-(engine()?.getStartMoney()||5000000))],['Emisie CO₂',Math.round(st.em||0).toLocaleString('sk-SK')+' t'],['Spokojnosť',Math.round(st.sat||0)+' %'],['Vyrobená / dodaná energia',((st.served||0)).toFixed(1)+' GWh'],['Znečistenie ovzdušia',Math.round(st.air||0)+' t/h']];const details=$ui('details');details.replaceChildren();for(const [label,value] of fields){const row=document.createElement('div');row.className='detailRow';const a=document.createElement('span'),b=document.createElement('strong');a.textContent=label;b.textContent=value;row.append(a,b);details.append(row)}for(const p of engine()?.getPlants()||[]){const output=$ui('out-'+p.k),percent=$ui('pct-'+p.k);if(output)output.textContent=frame.document.getElementById(p.k+'A')?.textContent+' MW';if(percent)percent.textContent=frame.document.getElementById(p.k)?.value+' %'}}
+setInterval(updateDashboard,700);
+world.addEventListener('load',()=>{world.contentWindow.addEventListener('powerplant:buildNotice',e=>showToast(e.detail.message));world.contentWindow.addEventListener('powerplant:constructionChanged',e=>{engine()?.setMoney(e.detail.money);showToast('Stavba bola pridaná na mapu.')});world.contentWindow.addEventListener('powerplant:worldGenerated',()=>{$ui('cancelBuild').click()})});
+
+
+const daylight={rise:[7.3,6.8,6,5.8,5,4.6,4.8,5.4,6,6.6,6.5,7.2],set:[16.2,17.2,18,19.6,20.5,21.2,21,20.2,19,17.7,16.3,15.8]};
+const dialPoint=(h,r)=>{const a=h/24*Math.PI*2-Math.PI/2;return [50+r*Math.cos(a),50+r*Math.sin(a)]};
+function dialArc(a,b,r){const p=dialPoint(a,r),q=dialPoint(b,r);return `M ${p[0]} ${p[1]} A ${r} ${r} 0 ${b-a>12?1:0} 1 ${q[0]} ${q[1]}`}
+function dialWedge(a,b){const p=dialPoint(a,45),q=dialPoint(b,45);return `M50 50 L${p[0]} ${p[1]} A45 45 0 ${b-a>12?1:0} 1 ${q[0]} ${q[1]} Z`}
+for(let i=0;i<24;i++){const a=dialPoint(i,37),b=dialPoint(i,i%6===0?44:41);const line=document.createElementNS('http://www.w3.org/2000/svg','line');line.setAttribute('x1',a[0]);line.setAttribute('y1',a[1]);line.setAttribute('x2',b[0]);line.setAttribute('y2',b[1]);$ui('clockTicks').append(line)}
+let lastClockMonth=-1,clockVisual=0,clockTarget=0,clockLastFrame=performance.now();
+function updateTopClock(t){clockTarget=t;const d=new Date(2026,10,6,Math.floor(t)),mon=d.getMonth();if(mon!==lastClockMonth){lastClockMonth=mon;const a=daylight.rise[mon],b=daylight.set[mon];$ui('clockDay').setAttribute('d',dialWedge(a,b));$ui('clockNight').setAttribute('d',dialWedge(b,a+24));$ui('clockDayRim').setAttribute('d',dialArc(a,b,46));$ui('clockNightRim').setAttribute('d',dialArc(b,a+24,46))}const h=((t%24)+24)%24;}
+function animateClock(now){
+ const dt=Math.min(.1,(now-clockLastFrame)/1000);clockLastFrame=now;
+ const paused=engine()?.isPaused()===true;
+ // Po pauze sa ručička zastaví okamžite, bez dobiehania animácie.
+ if(paused){clockVisual=clockTarget}
+ else if(clockTarget<clockVisual-1){clockVisual=clockTarget}
+ else {const rate=Math.max(.1,engine()?.getSpeed?.()||1)*2.2;clockVisual+=Math.min(Math.max(0,clockTarget-clockVisual),dt*rate)}
+ $ui('clockHand').setAttribute('transform',`rotate(${clockVisual*15} 50 50)`);
+ requestAnimationFrame(animateClock)
+}requestAnimationFrame(animateClock);
+function syncPauseButton(){const paused=engine()?.isPaused()||false;const btn=$ui('pauseClock');btn.textContent=paused?'▶':'⏸';btn.title=paused?'Pokračovať v simulácii':'Pozastaviť simuláciu';btn.setAttribute('aria-pressed',String(paused))}
+$ui('pauseClock').addEventListener('click',()=>{const simEngine=engine();if(!simEngine)return;simEngine.togglePause();syncPauseButton()});
+$ui('customSpeed').addEventListener('change',e=>{
+ const parsed=Number(String(e.target.value).replace(',','.'));
+ const value=Math.max(.1,Math.min(100,Number.isFinite(parsed)&&parsed>0?parsed:1));
+ e.target.value=String(value);engine()?.setSpeed(value)
+});
+sim.addEventListener('load',()=>{engine()?.setSpeed(Number($ui('customSpeed').value)||1);syncPauseButton()});
+function updateTopIndicators(st){
+ const sat=Math.max(0,Math.min(100,st.sat??0)),b=st.satBreakdown||{},direction=(b.delta||0)>0.005?'rastie':(b.delta||0)<-0.005?'klesá':'je stabilná';
+ const fmt=n=>Number(n||0).toFixed(2).replace('.',',');
+ const tips=`SPOKOJNOSŤ: ${fmt(sat)} % — ${direction} (${b.delta>=0?'+':''}${fmt(b.delta)} bodu/h)\nCieľová spokojnosť: ${fmt(b.target??100)} %\nZnečistenie ovzdušia: −${fmt(b.pollution)} bodu\nVýpadky: −${fmt(b.blackout)} bodu\nNedostatok dodávky: −${fmt(b.shortfall)} bodu\nAktuálne znečistenie: ${fmt(b.air)} t/h\nSpokojnosť sa postupne približuje k cieľovej hodnote.`;
+ $ui('topSatValue').textContent=Math.round(sat)+' %';$ui('topSatBar').style.width=sat+'%';$ui('topSatBar').style.background=sat<35?'#ee6565':sat<65?'#e5b348':'#39bc7a';$ui('topSatBar').parentElement.parentElement.title=tips;
+ const em=Math.round(st.em||0),e=st.emBreakdown||{},names={nu:'Jadrová',so:'Solárna',hy:'Vodná',wi:'Veterná',cl:'Uhoľná',ga:'Plynová',oi:'Ropná',backup:'Náhradná výroba pri deficite'};
+ const lines=Object.entries(names).map(([k,name])=>`${name}: ${fmt(e[k])} t CO₂/h`);
+ $ui('topEmValue').textContent=em.toLocaleString('sk-SK')+' t';
+ $ui('topEmissions').title=`EMISIE CO₂: ${em.toLocaleString('sk-SK')} t celkom\nAktuálny prírastok: +${fmt(st.emRate)} t/h\n\nPríspevky podľa zdrojov:\n${lines.join('\n')}\n\nEmisie sú kumulatívne, preto neklesajú; znížiť možno rýchlosť ich pribúdania. Model zahŕňa životný cyklus zdrojov.`;
+ const detail=$ui('details');if(detail){const rows=detail.querySelectorAll('.detailRow');for(const row of rows){const name=row.querySelector('span')?.textContent||'';if(name.includes('Spokojnosť'))row.title=tips;if(name.includes('Emisie'))row.title=$ui('topEmissions').title;}}
+}
+function updateWeatherUI(st){const w=engine()?.getWeather(),banner=$ui('weatherBanner');banner.hidden=!w;if(!w)return;$ui('weatherTitle').textContent=w.icon+' '+w.name+' · '+Math.max(0,Math.ceil((w.until-st.t)/24))+' dní';$ui('weatherDesc').textContent=w.desc+' · Hydro '+Math.round((w.hy-1)*100)+' %, solár '+Math.round((w.so-1)*100)+' %, vietor '+Math.round((w.wi-1)*100)+' %, odber '+Math.round((w.dm-1)*100)+' %';banner.title='Environmentálna udalosť — každých 7 herných dní. '+w.desc}
+function syncNavHeight(){document.documentElement.style.setProperty('--nav-height',document.querySelector('.nav').getBoundingClientRect().height+'px')}
+new ResizeObserver(syncNavHeight).observe(document.querySelector('.nav'));syncNavHeight();
+window.PowerplantBridge.isCoastal=()=>{const api=map(),st=api?.getState();if(!st?.startCity)return false;const c=st.cities.find(x=>x.id===st.startCity);if(!c)return false;for(let r of [150,300,500])for(let j=0;j<16;j++){const a=j*Math.PI/8,t=api.getTerrain(c.x+r*Math.cos(a),c.y+r*Math.sin(a));if(t&&t.e<=.43)return true}return false};
+
+world.addEventListener('load',()=>world.contentWindow.addEventListener('powerplant:plantSelected',e=>{toggleDrawer('leftDrawer',true);renderPlants();const k=e.detail.type;const el=$ui('fuel-'+k);if(el){el.hidden=false;el.parentElement.scrollIntoView({behavior:'smooth',block:'center'});}else showToast('Elektráreň: '+(e.detail.type||'štartovacia'));}));
+</script></body></html>
